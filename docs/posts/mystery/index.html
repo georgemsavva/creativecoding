@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+  <meta charset="utf-8">
+  <meta name="generator" content="quarto-0.9.80">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="author" content="George">
+  <meta name="dcterms.date" content="2022-05-02">
+  <title>Mathematical Art and Creative Coding - Mystery curves</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+
+  <script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+  <script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+  <script src="../../site_libs/clipboard/clipboard.min.js"></script>
+  <meta name="quarto:offset" content="../../">
+  <script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+  <script src="../../site_libs/quarto-search/fuse.min.js"></script>
+  <script src="../../site_libs/quarto-search/quarto-search.js"></script>
+  <script src="../../site_libs/quarto-html/quarto.js"></script>
+  <script src="../../site_libs/quarto-html/popper.min.js"></script>
+  <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+  <script src="../../site_libs/quarto-html/anchor.min.js"></script>
+  <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+  <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet">
+  <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+  <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <script id="quarto-search-options" type="application/json">{
+    "location": "navbar",
+    "copy-button": false,
+    "collapse-after": 2,
+    "panel-placement": "end",
+    "type": "overlay",
+    "limit": 20,
+    "language": {
+      "search-no-results-text": "No results",
+      "search-matching-documents-text": "matching documents",
+      "search-copy-link-title": "Copy link to search",
+      "search-hide-matches-text": "Hide additional matches",
+      "search-more-match-text": "more match in this document",
+      "search-more-matches-text": "more matches in this document",
+      "search-clear-button-title": "Clear",
+      "search-detached-cancel-button-title": "Cancel",
+      "search-submit-button-title": "Submit"
+    }
+  }</script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="fullcontent">
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Mathematical Art and Creative Coding</span>
+  </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html">About</a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/"><i class="bi bi-github" role="img">
+</i> 
+ </a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com"><i class="bi bi-twitter" role="img">
+</i> 
+ </a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+<header id="title-block-header" class="quarto-title-block default">
+
+
+
+<div class="quarto-title"><h1 class="title display-7">Mystery curves</h1></div><div class="quarto-categories"><div class="quarto-category">art</div><div class="quarto-category">R</div></div><div class="quarto-title-meta"><div><div class="quarto-title-meta-heading">Author</div><div class="quarto-title-meta-contents"><div class="quarto-title-authors"><p>George</p></div></div></div><div><div class="quarto-title-meta-heading">Published</div><div class="quarto-title-meta-contents"><p class="date">May 2, 2022</p></div></div></div></header>
+<p>‘Mystery curves’ are described by Frank Farris in his book <a href="https://press.princeton.edu/books/hardcover/9780691161730/creating-symmetry"><em>Creating Symmetry</em></a>. They are a kind of circular harmonograph, each created by summing three circular components, and are the basis for a lot of my creative coding.</p>
+<p>For example, these two pieces are both based on mystery curves:</p>
+<p><img src="images/clocks5s.png" class="img-fluid" style="width:45.0%" alt="Clock5"> <img src="images/mystery2.png.png" class="img-fluid" style="width:45.0%" alt="Mystery2"></p>
+<p>In this post I’ll explain how mystery curves are put together, how I do this using R, and finish with the complete code of an animation.</p>
+<section id="a-note-on-r" class="level1">
+<h1>A note on R</h1>
+<p>In this post I have shown the complete R source code used to generate each image or animation.</p>
+<p>For the first few animations, individual images are defined within for loops, and these are combined into a <code>.gif</code> as the blog post was built (as described <a href="https://yihui.org/en/2018/08/gifski-knitr/">here</a>. The final two animations are supplied with the complete code (using the <code>gifski</code> package) to generate <code>gif</code>s. I haven’t gone into the detail of this. In the real world I built the final animation by creating antialiased <code>.png</code> images for each frame then using <code>ffmpeg</code> to stitch them into a video, producing a nicer final output.</p>
+<p>This page is written using Quatro in RStudio, the code for the page is available on the github. Anyway…</p>
+</section>
+<section id="describing-curves-with-complex-numbers-using-r" class="level1">
+<h1>Describing curves with complex numbers using R</h1>
+<p>Curves (including circles) can described as complex functions <span class="math inline">\(z(t)\)</span>.</p>
+<p>R handles complex numbers very simply, and so describing circles (and mystery curves) in this way and plotting them using R is straightforward.</p>
+<p>First we create the index <span class="math inline">\(t\)</span>.</p>
+<div class="cell">
+<div class="sourceCode" id="cb1"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>t <span class="ot">=</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="at">l=</span><span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This creates a vector <code>t</code> including the sequence 0 to <span class="math inline">\(4\)</span> in 1000 steps.</p>
+<p>Now to create our circle. Using complex maths, <span class="math inline">\(z(t)=i^t\)</span> with <span class="math inline">\(t\)</span> between 0 and 4 describes a complete circle.</p>
+<p>In R we use <code>1i</code> for the complex number <span class="math inline">\(i=\sqrt{-1}\)</span>. So we define a vector <code>z=1i^t</code> and make a plot.</p>
+<div class="cell">
+<div class="sourceCode" id="cb2"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Script to draw a circle</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>t <span class="ot">=</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="at">l=</span><span class="dv">1000</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>z <span class="ot">=</span> 1i<span class="sc">^</span>t</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Note that we don’t need a loop to calculate and plot the entire function. <code>t</code> is a vector of 1000 values, and so when we use <code>z=1i^t</code> R creates a vector <code>z</code> with 1000 corresponding values. When we call <code>plot</code> with the complex vector <code>z</code> R simply plots the imaginary component on the vertical axis against the real component on the horizontal axis.</p>
+<p>To see the first few <code>t</code> and <code>z</code> values we could use:</p>
+<div class="cell">
+<div class="sourceCode" id="cb3"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cbind</span>(t,z) <span class="sc">|&gt;</span> <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-stdout">
+<pre><code>                  t                    z
+[1,] 0.000000000+0i 1.0000000+0.0000000i
+[2,] 0.004004004+0i 0.9999802+0.0062894i
+[3,] 0.008008008+0i 0.9999209+0.0125786i
+[4,] 0.012012012+0i 0.9998220+0.0188673i
+[5,] 0.016016016+0i 0.9996836+0.0251552i
+[6,] 0.020020020+0i 0.9995056+0.0314422i</code></pre>
+</div>
+</div>
+<section id="artistic-augmentations" class="level2">
+<h2 class="anchored" data-anchor-id="artistic-augmentations">Artistic augmentations</h2>
+<p>Now there’s a few things we would want to change about this plot. We don’t want the axes or the annotation, we would like it to be a connected as a line rather than a series of points, and we would like the aspect ratio to be 1.</p>
+<p>So we can amend our script as follows:</p>
+<div class="cell">
+<div class="sourceCode" id="cb5"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>t <span class="ot">=</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="at">l=</span><span class="dv">1000</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>z <span class="ot">=</span> 1i<span class="sc">^</span>t</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>I also set the margin to be 0 on all sides, and the linewidth <code>lwd</code> to be 2.</p>
+</section>
+<section id="a-mystery-curve" class="level2">
+<h2 class="anchored" data-anchor-id="a-mystery-curve">A mystery curve</h2>
+<p>Now to add the mystery elements. These are created by adding more circular motion with different amplitude, frequency and phase to our existing circle. For example, lets plot <span class="math inline">\(z(t)=i^t + 0.5i^{5t+1}\)</span>.</p>
+<div class="cell">
+<div class="sourceCode" id="cb6"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>amp<span class="ot">=</span><span class="fl">0.5</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>freq<span class="ot">=</span><span class="dv">5</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>phase<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>z <span class="ot">=</span> 1i<span class="sc">^</span>t <span class="sc">+</span>                      <span class="co"># Our original circle</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  amp<span class="sc">*</span>(1i<span class="sc">^</span>(freq<span class="sc">*</span>t <span class="sc">+</span> phase))     <span class="co"># A new cirlce</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The animation below shows how this curve works. We are adding two circular motions together, the second rotating five times for every one rotation of the first, but with a smaller radius (0.5) and starting from a different angle. Notice how the second circle rotating five times for every one of the main circle leads to 4-fold rotational symmetry in the resulting shape:</p>
+<div class="cell" data-animation.hook="gifski">
+<div class="sourceCode" id="cb7"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>amp<span class="ot">=</span><span class="fl">0.5</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>freq<span class="ot">=</span><span class="dv">5</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>phase<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>t <span class="ot">=</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="at">l=</span><span class="dv">1000</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">1000</span>,<span class="dv">10</span>)){</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      z <span class="ot">=</span> 1i<span class="sc">^</span>t <span class="sc">+</span>                        <span class="co"># Our original circle</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>          amp<span class="sc">*</span>(1i<span class="sc">^</span>(freq<span class="sc">*</span>t <span class="sc">+</span> phase))     <span class="co"># A new cirlce</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">lines</span>(<span class="fu">c</span>(<span class="dv">0</span>,(1i<span class="sc">^</span>t)[j],z[j]),<span class="at">lwd=</span><span class="dv">3</span>,<span class="at">col=</span><span class="st">"red"</span>) <span class="co"># add lines</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">points</span>(<span class="fu">c</span>(<span class="dv">0</span>,(1i<span class="sc">^</span>t)[j],z[j]),<span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">20</span>)   <span class="co"># add points</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>      }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-7-.gif" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Now when we add another term we get a plot that looks even more interesting. Rather than defining <span class="math inline">\(t\)</span> and typing out the formula for a circle each time, I will create a function to define a circle, then add three circles together as follows:</p>
+<div class="cell">
+<div class="sourceCode" id="cb8"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">1000</span>)<span class="sc">+</span>phase)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>z <span class="ot">=</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.5</span>,<span class="dv">5</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.6</span>,<span class="dv">9</span>,<span class="dv">1</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We can animate the motion similarly to the previous curve:</p>
+<div class="cell" data-animation.hook="gifski">
+<div class="sourceCode" id="cb9"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">1000</span>)<span class="sc">+</span>phase)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">1000</span>,<span class="dv">2</span>)){</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>      z <span class="ot">=</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.5</span>,<span class="dv">5</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.6</span>,<span class="dv">9</span>,<span class="dv">1</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      lps <span class="ot">=</span> <span class="fu">cumsum</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>)[j],<span class="fu">circle</span>(<span class="fl">0.5</span>,<span class="dv">5</span>,<span class="dv">0</span>)[j],<span class="fu">circle</span>(<span class="fl">0.6</span>,<span class="dv">9</span>,<span class="dv">1</span>)[j]))</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">lines</span>(lps,<span class="at">lwd=</span><span class="dv">3</span>,<span class="at">col=</span><span class="st">"red"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">points</span>(lps,<span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">20</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-9-.gif" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Note that this plot, with three components having frequencies 1, 5 and 9 still has 4-fold rotational symmetry. As Farris explains, the image will have <span class="math inline">\(N\)</span>-fold rotational symmetry if the frequency of each circle has the same remainder when divided by <span class="math inline">\(N\)</span>, that is, all frequencies equal mod <span class="math inline">\(N\)</span>. Here, 1, 5 and 9 are all 1 (mod 4) and so the image has 4-fold rotational symmetry.</p>
+<p>We can include negative frequencies as well, so long as we remember this rule. Since <span class="math inline">\(-7\mod 4 =1\)</span> this will also have 4-fold rotational symmetry:</p>
+<div class="cell" data-animation.hook="gifski">
+<div class="sourceCode" id="cb10"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">1000</span>)<span class="sc">+</span>phase)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">1000</span>,<span class="dv">2</span>)){</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>      z <span class="ot">=</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.5</span>,<span class="dv">5</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.6</span>,<span class="sc">-</span><span class="dv">7</span>,<span class="dv">1</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>      lps <span class="ot">=</span> <span class="fu">cumsum</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>)[j],<span class="fu">circle</span>(<span class="fl">0.5</span>,<span class="dv">5</span>,<span class="dv">0</span>)[j],<span class="fu">circle</span>(<span class="fl">0.6</span>,<span class="sc">-</span><span class="dv">7</span>,<span class="dv">1</span>)[j]))</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">lines</span>(lps,<span class="at">lwd=</span><span class="dv">3</span>,<span class="at">col=</span><span class="st">"red"</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">points</span>(lps,<span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">20</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-10-.gif" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We can alter the shape of a curve over time by changing its parameters as we animate. In the code below, an animation is built with the parameter <span class="math inline">\(j\)</span> which varies from 0 to 4 in 100 steps . The phase shift (starting angle) of the third component is set equal to <span class="math inline">\(j\)</span>.</p>
+<p>In addition, the limits of the plot are now fixed at <span class="math inline">\((-2,2)\)</span> in both dimensions.</p>
+<div class="cell" data-animation.hook="gifski">
+<div class="sourceCode" id="cb11"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">1000</span>)<span class="sc">+</span>phase)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>limits<span class="ot">=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)<span class="sc">*</span><span class="dv">2</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( j <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">100</span>)[<span class="sc">-</span><span class="dv">1</span>]){</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>      z <span class="ot">=</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.5</span>,<span class="dv">5</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fl">0.6</span>,<span class="sc">-</span><span class="dv">7</span>,j)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(z, <span class="at">xlim=</span>limits, <span class="at">ylim=</span>limits,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">type=</span><span class="st">"l"</span>, </span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-.gif" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="mystery-rose" class="level1">
+<h1>Mystery Rose</h1>
+<p>As an artistic embellishment, we can plot the points out of order, and connect them with lines. If instead of <span class="math inline">\(t\)</span> = 0 to 4 in 1000 steps, we use <span class="math inline">\(t\)</span> = 0 to 40 in 799 steps, then our points will skip around the curve in equally spaced intervals, before arriving at <span class="math inline">\(z(40)=z(0)\)</span>. This is similar to the construction of a <a href="https://en.wikipedia.org/wiki/Maurer_rose">Maurer rose</a>, but using a mystery curve as the underlying curve.</p>
+<div class="cell" data-animation.hook="gifski" width="800" height="800">
+<div class="sourceCode" id="cb12"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">40</span>,<span class="at">l=</span><span class="dv">799</span>)<span class="sc">+</span>phase)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>limits<span class="ot">=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)<span class="sc">*</span><span class="fl">2.5</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">100</span>)[<span class="sc">-</span><span class="dv">1</span>]){</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      z <span class="ot">=</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">6</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="sc">-</span><span class="dv">9</span>,j)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">par</span>(<span class="at">bg=</span><span class="st">"black"</span>) <span class="co"># set a black background</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="co"># create plot with points</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(<span class="at">xlim=</span>limits, <span class="at">ylim=</span>limits,<span class="at">col=</span><span class="st">"cyan"</span>,<span class="at">pch=</span><span class="dv">19</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>           z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">lines</span>(z,<span class="at">col=</span><span class="fu">hsv</span>(.<span class="dv">7</span>,.<span class="dv">5</span>,<span class="dv">1</span>,<span class="fl">0.4</span>)) <span class="co"># connect points with lines</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>      }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-12-.gif" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>If we modulate the amplitudes of the components with time, we can change the shape of the curve in a very dynamic way.</p>
+<p>Note in this example I also use the <code>gifski</code> package explicitly to produce the animation as a <code>.gif</code> :</p>
+<div class="cell">
+<div class="sourceCode" id="cb13"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gifski)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">400</span>,<span class="at">l=</span><span class="dv">799</span>)<span class="sc">+</span>phase)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>limits<span class="ot">=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)<span class="sc">*</span><span class="fl">2.5</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save_gif</span>(<span class="fu">lapply</span>(<span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">4</span>,<span class="at">l=</span><span class="dv">500</span>)[<span class="sc">-</span><span class="dv">1</span>],</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(j){</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">par</span>(<span class="at">bg=</span><span class="st">"black"</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        z <span class="ot">=</span> <span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fu">sin</span>(pi<span class="sc">*</span>j<span class="sc">/</span><span class="dv">2</span>),<span class="dv">6</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">circle</span>(<span class="fu">cos</span>(pi<span class="sc">*</span>j<span class="sc">/</span><span class="dv">2</span>),<span class="sc">-</span><span class="dv">9</span>,j)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        hue <span class="ot">=</span> (j<span class="sc">/</span><span class="dv">4</span><span class="sc">+</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="fl">0.5</span>,<span class="at">l=</span><span class="dv">799</span>))<span class="sc">%%</span><span class="dv">1</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">plot</span>(<span class="at">xlim=</span>limits, <span class="at">ylim=</span>limits,<span class="at">col=</span><span class="fu">hsv</span>(hue,.<span class="dv">8</span>,<span class="dv">1</span>),<span class="at">pch=</span><span class="dv">19</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>             z, <span class="at">axes=</span><span class="cn">FALSE</span>, <span class="at">ann=</span><span class="cn">FALSE</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">lines</span>(z,<span class="at">col=</span><span class="fu">hsv</span>(hue[<span class="dv">1</span>],.<span class="dv">5</span>,<span class="dv">1</span>,<span class="fl">0.4</span>))</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>        }),</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">delay=</span><span class="dv">1</span><span class="sc">/</span><span class="dv">30</span>,<span class="at">width =</span> <span class="dv">800</span>,<span class="at">height=</span><span class="dv">800</span>, <span class="at">gif_file =</span> <span class="st">"mystery.gif"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><img src="mystery.gif" class="img-fluid"></p>
+<p>Note the use of <code>col=</code> to set the colours of the points and lines. I used <code>col=hsv(...)</code> to choose the hue, saturation and value for each point and line.</p>
+<p>Finally, we can change the frequencies, amplitudes and phases in sync to arrive at this animation from 2021. The trick here is to use integer frequencies, and to only change the frequency of a component when its corresponding amplitude is zero. This way our animation can smoothly change its order of rotational symmetry throughout.</p>
+<p>There are a couple of other nuances in the code below, most important that lines produced by <code>lines</code> cannot be different colours, and so I use <code>segments</code> instead.</p>
+<div class="cell">
+<div class="sourceCode" id="cb14"><pre class="sourceCode r cell-code code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gifski)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="cf">function</span>(amp, freq, phase) amp<span class="sc">*</span>1i<span class="sc">^</span>(freq<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">600</span>,<span class="at">l=</span><span class="dv">260</span>)<span class="sc">+</span>phase)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>limits<span class="ot">=</span><span class="fl">3.5</span><span class="sc">*</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>li <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">500</span>)[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save_gif</span>(<span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(li), <span class="cf">function</span>(ai){</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> li[ai]<span class="sc">*</span><span class="dv">5</span>;</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  l <span class="ot">=</span> <span class="fu">sin</span>(pi<span class="sc">*</span>(<span class="dv">2</span><span class="sc">*</span>a<span class="fl">-.5</span>))<span class="sc">+</span><span class="dv">1</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  z<span class="ot">&lt;-</span><span class="fu">circle</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> </span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>     <span class="fu">circle</span>(l, <span class="fu">ceiling</span>(a), <span class="sc">-</span><span class="dv">8</span><span class="sc">*</span>a) <span class="sc">+</span> </span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>     <span class="fu">circle</span>(l<span class="sc">/</span><span class="dv">2-1</span>,<span class="fu">ceiling</span>(((<span class="sc">-</span>a<span class="fl">+2.5</span>)<span class="sc">%%</span><span class="dv">5</span>)<span class="sc">-</span><span class="dv">5</span>), <span class="sc">-</span><span class="dv">4</span><span class="sc">*</span>a) </span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>), <span class="at">bg=</span><span class="st">"#04010F"</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  hue<span class="ot">=</span>(a<span class="sc">+</span>(<span class="fu">Re</span>(z<span class="sc">/</span><span class="dv">10</span>)))<span class="sc">%%</span><span class="dv">1</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(z, </span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">col=</span><span class="fu">hsv</span>(hue, <span class="fl">0.65</span>,<span class="dv">1</span>), </span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>       <span class="at">pch=</span><span class="dv">20</span>, <span class="at">lwd=</span><span class="dv">1</span>, <span class="at">cex=</span><span class="fl">1.5</span>, <span class="at">type=</span><span class="st">"p"</span>, <span class="at">axes=</span>F, </span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlim=</span>limits, <span class="at">ylim=</span>limits)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  z2 <span class="ot">&lt;-</span> <span class="fu">c</span>(z[<span class="sc">-</span><span class="dv">1</span>], z[<span class="dv">1</span>])</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">segments</span>(<span class="fu">Re</span>(z), <span class="fu">Im</span>(z), <span class="fu">Re</span>(z2), <span class="fu">Im</span>(z2), </span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span><span class="fu">hsv</span>(hue, <span class="fl">0.65</span>,<span class="dv">1</span>,.<span class="dv">1</span>), <span class="at">pch=</span><span class="dv">20</span>, <span class="at">lwd=</span><span class="dv">1</span>)</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>}), <span class="at">delay =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">40</span>, <span class="at">width=</span><span class="dv">800</span>, <span class="at">height=</span><span class="dv">800</span>, <span class="at">gif_file =</span> <span class="st">"mystery2.gif"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><img src="mystery2.gif" class="img-fluid"></p>
+<p>Please leave any comments below.</p>
+<script src="https://giscus.app/client.js" data-repo="georgemsavva/creativecoding" data-repo-id="R_kgDOHRS9pg" data-category="Announcements" data-category-id="DIC_kwDOHRS9ps4CO5d8" data-mapping="pathname" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script>
+<p>Hey!</p>
+
+
+</section>
+</main> <!-- /main -->
+<script type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    setTimeout(function() {
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+</body></html>

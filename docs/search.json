@@ -1,0 +1,37 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "This is my blog for creative coding."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Posts",
+    "section": "",
+    "text": "Order By\n       Default\n         \n          Title\n        \n         \n          Date - Oldest\n        \n         \n          Date - Newest\n        \n         \n          Author\n        \n     \n  \n    \n      \n      \n    \n\n\n\n\n  \n\n\n\n\nMystery curves\n\n\n\n\n\n\n\nart\n\n\nR\n\n\n\n\n‘Mystery curves’ are described by Frank Farris in his book Creating Symmetry. They are a kind of circular harmonograph, each created by summing three circular components, and are the basis for a lot of my creative coding.\n\n\n\n\n\n\nMay 2, 2022\n\n\nGeorge\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\nWelcome to my Creative Coding blog.\n\n\n\n\n\n\nMay 2, 2022\n\n\nGeorge\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "posts/mystery/index.html#artistic-augmentations",
+    "href": "posts/mystery/index.html#artistic-augmentations",
+    "title": "Mystery curves",
+    "section": "Artistic augmentations",
+    "text": "Artistic augmentations\nNow there’s a few things we would want to change about this plot. We don’t want the axes or the annotation, we would like it to be a connected as a line rather than a series of points, and we would like the aspect ratio to be 1.\nSo we can amend our script as follows:\n\nt = seq(0, 4, l=1000)\nz = 1i^t\nplot(z, axes=FALSE, ann=FALSE, type=\"l\", lwd=2, asp=1, mar=c(0,0,0,0))\n\n\n\n\nI also set the margin to be 0 on all sides, and the linewidth lwd to be 2."
+  },
+  {
+    "objectID": "posts/mystery/index.html#a-mystery-curve",
+    "href": "posts/mystery/index.html#a-mystery-curve",
+    "title": "Mystery curves",
+    "section": "A mystery curve",
+    "text": "A mystery curve\nNow to add the mystery elements. These are created by adding more circular motion with different amplitude, frequency and phase to our existing circle. For example, lets plot \\(z(t)=i^t + 0.5i^{5t+1}\\).\n\namp=0.5\nfreq=5\nphase=1\n\nz = 1i^t +                      # Our original circle\n  amp*(1i^(freq*t + phase))     # A new cirlce\n\nplot(z, axes=FALSE, ann=FALSE, type=\"l\", lwd=2, asp=1, mar=c(0,0,0,0))\n\n\n\n\nThe animation below shows how this curve works. We are adding two circular motions together, the second rotating five times for every one rotation of the first, but with a smaller radius (0.5) and starting from a different angle. Notice how the second circle rotating five times for every one of the main circle leads to 4-fold rotational symmetry in the resulting shape:\n\namp=0.5\nfreq=5\nphase=1\nt = seq(0, 4, l=1000)\n\nfor(j in seq(1,1000,10)){\n\n      z = 1i^t +                        # Our original circle\n          amp*(1i^(freq*t + phase))     # A new cirlce\n      \n      plot(z, axes=FALSE, ann=FALSE, type=\"l\", lwd=2, asp=1, mar=c(0,0,0,0))\n\n      lines(c(0,(1i^t)[j],z[j]),lwd=3,col=\"red\") # add lines\n      points(c(0,(1i^t)[j],z[j]),cex=2,pch=20)   # add points\n\n      }\n\n\n\n\nNow when we add another term we get a plot that looks even more interesting. Rather than defining \\(t\\) and typing out the formula for a circle each time, I will create a function to define a circle, then add three circles together as follows:\n\ncircle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)\n\nz = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,9,1)\n\nplot(z, axes=FALSE, ann=FALSE, type=\"l\", lwd=2, asp=1, mar=c(0,0,0,0))\n\n\n\n\nWe can animate the motion similarly to the previous curve:\n\ncircle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)\n\nfor(j in seq(1,1000,2)){\n\n      z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,9,1)\n      plot(z, axes=FALSE, ann=FALSE, type=\"l\", lwd=2, asp=1, mar=c(0,0,0,0))\n      lps = cumsum(c(0,circle(1,1,0)[j],circle(0.5,5,0)[j],circle(0.6,9,1)[j]))\n      lines(lps,lwd=3,col=\"red\")\n      points(lps,cex=2,pch=20)\n      }\n\n\n\n\nNote that this plot, with three components having frequencies 1, 5 and 9 still has 4-fold rotational symmetry. As Farris explains, the image will have \\(N\\)-fold rotational symmetry if the frequency of each circle has the same remainder when divided by \\(N\\), that is, all frequencies equal mod \\(N\\). Here, 1, 5 and 9 are all 1 (mod 4) and so the image has 4-fold rotational symmetry.\nWe can include negative frequencies as well, so long as we remember this rule. Since \\(-7\\mod 4 =1\\) this will also have 4-fold rotational symmetry:\n\ncircle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)\n\nfor(j in seq(1,1000,2)){\n      z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,-7,1)\n      plot(z, axes=FALSE, ann=FALSE, type=\"l\", lwd=2, asp=1, mar=c(0,0,0,0))\n      \n      lps = cumsum(c(0,circle(1,1,0)[j],circle(0.5,5,0)[j],circle(0.6,-7,1)[j]))\n      lines(lps,lwd=3,col=\"red\")\n      points(lps,cex=2,pch=20)\n}\n\n\n\n\nWe can alter the shape of a curve over time by changing its parameters as we animate. In the code below, an animation is built with the parameter \\(j\\) which varies from 0 to 4 in 100 steps . The phase shift (starting angle) of the third component is set equal to \\(j\\).\nIn addition, the limits of the plot are now fixed at \\((-2,2)\\) in both dimensions.\n\ncircle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)\nlimits=c(-1,1)*2\n\nfor( j in seq(0,4,l=100)[-1]){\n\n      z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,-7,j)\n      \n      plot(z, xlim=limits, ylim=limits,\n           axes=FALSE, ann=FALSE, type=\"l\", \n           lwd=2, asp=1, mar=c(0,0,0,0))\n      }"
+  },
+  {
+    "objectID": "posts/welcome/index.html",
+    "href": "posts/welcome/index.html",
+    "title": "Welcome To My Blog",
+    "section": "",
+    "text": "Welcome to my Creative Coding blog.\nFor the past few years I’ve been making pretty things with code.\nI’ve discovered a few tricks along the way, and the aim of this blog is to share these with the community.\nI have learnt a lot from others blog posts, and so I hope to give something back.\nMy main language for coding is R, although I hope that the posts will be useful for those using other languages."
+  }
+]
