@@ -1,0 +1,33 @@
+---
+title: "Welcome To My Blog"
+author: "George"
+date: "05/02/2022"
+categories: [news]
+---
+
+Welcome to my Creative Coding blog.
+
+For the past few years I've been making pretty things with code.
+
+I've discovered a few tricks along the way, and the aim of this blog is to share these with the community.
+
+I have learnt a lot from others blog posts, and so with this site hope to give something back.
+
+My main language for coding is R, although I hope that the posts will be useful for those using other languages.
+
+```{=html}
+<script src="https://giscus.app/client.js"
+        data-repo="georgemsavva/creativecoding"
+        data-repo-id="R_kgDOHRS9pg"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOHRS9ps4CO5d8"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+```
