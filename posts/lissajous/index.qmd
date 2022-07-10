@@ -1,0 +1,178 @@
+---
+title: "Lissajous curves"
+author: "George"
+date: "07/07/2022"
+execute:
+  cache: false
+categories: [art, R]
+image: "mystery00436.png"
+---
+
+This post describes how to create one of my favourite creations.  The process followed is more-or-less the process by which I came to the final image, but with a lot more trial and error along the way.  The image is based around Lissajous curves, which are widely used in mathematical art and were extensively explored by Jules Lissajous in  the 19th century.
+
+An image search for 'Lissajous art' or similar will show you a lot of ways people have used Lissajous curves, or more generally harmonographs, to make beautiful images.  But I haven't seen anything quite like what is described here...
+
+## Lissajous curves
+
+Lissajous curves are the shapes traced out by sinusoidal motion in two dimensions.  They are characterised by the equations: 
+
+\begin{align*}
+x & = A\times\sin(f_x t - \delta_x) \\
+y & = B\times\cos(f_y t - \delta_y) \\
+\end{align*}
+
+Where $A$ and $B$ are amplitudes, $f_x$ and $f_y$ are the frequencies of the motion and $\delta_x$ and $\delta_y$ the phase shift.
+
+It is simple to draw a Lissajous curve in R using:
+
+```{r l1}
+t = seq(0,10,0.01)
+
+x = sin(2*pi*t)
+y = cos(3*pi*t)
+
+limits = c(-1,1)
+plot(x,y,type="l",asp=1,xlim=limits,ylim=limits)
+
+```
+
+By visualising the motion in both dimensions it should be clear how the shape comes about:
+
+```{r l1b, animation.hook='gifski',interval=.04}
+t = seq(0,10,0.01)
+
+x = sin(2*pi*t)
+y = cos(3*pi*t)
+
+limits = c(-1,1)
+for(i in seq(0,6,l=600)){
+  plot(x,y,type="l",asp=1,xlim=1.2*limits,ylim=1.2*limits)
+  lines(x=c(sin(2*i*pi),sin(2*i*pi),-1.1),
+        y=c(-1.1,cos(3*pi*i),cos(3*pi*i)),pch=20,type="o",lty="dashed")
+  
+}
+
+
+```
+
+By changing the frequencies we can generate some interesting patterns
+
+```{r l2, animation.hook='gifski'}
+for(i in 1:4) for(j in 2:5){
+  plot(x = sin(i*pi*t),
+       y=cos(j*pi*t),
+       type="l",asp=1,xlim=limits,ylim=limits,
+       main=sprintf("i=%d; j=%d",i,j))
+}
+
+```
+
+There are lots of interesting things to do with Lissajous curves.  In particular you can overlay them, which lead to some interesting intersections:
+
+```{r l3, animation.hook='gifski'}
+plot(NA, xlim=limits,ylim=limits,asp=1)
+for(i in 1:4) for(j in 2:5){
+  points(x = sin(i*pi*t),y=cos(j*pi*t),type="l")
+}
+
+```
+
+Lets add a bit of colour, remove the axes and annotation etc.  Not great but you can start to see how you'd make something interesting..
+
+```{r l4}
+
+par(mar=c(1,1,1,1))
+plot(NA, xlim=limits,ylim=limits,asp=1,axes=F,ann=F)
+for(i in 1:4) for(j in 2:5){
+  points(x = sin(i*pi*t),y=cos(j*pi*t),type="l",
+         lwd=10/(i+j),
+         col=hsv(h=.5+j/10,
+         s=1,v=1,
+         alpha=1/(i+j-2)))
+}
+
+```
+
+These intersections aren't as interesting as they might be.  If we make the frequencies increase as a geometric rather than an arithmetic sequence there are more interesting patterns.
+
+```{r l6}
+t = seq(0,10,0.001)
+par(mar=c(1,1,1,1))
+limits=c(-1,1)
+plot(NA, xlim=limits,ylim=limits,asp=1,axes=F,ann=F)
+for(i in 5) for(a in (-4:4)){
+  points(x = sin(i*pi*t),
+         y = cos(2*2^a*pi*t),type="l",
+         lwd=2,
+         col=hsv(h=.6,
+                 s=.5,v=.5,
+                 alpha=1/(abs(a)+1)))
+}
+```
+
+The next image is exactly the same as the previous one, except that I have replaced $x$ with $x^3$ and $y$ with $y^3$.  I also swapped the $x$ and $y$ axes because the image looked nicer that way around.
+
+```{r l6b}
+t = seq(0,10,0.001)
+par(mar=c(1,1,1,1))
+limits=c(-1,1)
+plot(NA, xlim=limits,ylim=limits,asp=1,axes=F,ann=F)
+for(i in 5) for(a in (-4:4)){
+  points(y = sin(i*pi*t)^3,
+         x = cos(2*2^a*pi*t)^3,type="l",
+         lwd=2,
+         col=hsv(h=.6,
+                 s=.5,v=.5,
+                 alpha=1/(abs(a)+1)))
+}
+
+```
+
+Instead of plotting the lines, we can plot points. Using random point sizes with random colours makes the image more interesting.  Something else interesting happens when we swicth to points; the shorter paths have denser points so they become more prominent in the image:
+
+```{r l7}
+t = seq(0,50,l=1e4)
+par(mar=c(1,1,1,1))
+limits=c(-1,1)
+plot(NA, xlim=limits,ylim=limits,asp=1,axes=F,ann=F)
+for(i in 5) for(a in (-4:4)){
+  points(y = sin(i*pi*t)^3,
+         x = cos(2*2^a*pi*t)^3,type="p",
+         cex=.5*runif(1000),
+         pch=20,
+         col=hsv(h=.6,
+                 s=runif(1000),v=runif(1000),
+                 alpha=runif(1000)/(abs(a)+1)))
+}
+
+```
+
+
+This is close to the image we want.  Tweaking some parameters can improve the balance between the curves, and  are happy with!  I have tweaked the point sizes a bit so they depend on which curve is being drawn, and rendered the image at higher resolution.  
+
+The point hue is slightly random, there is an off-white background and the number of points per curve is 30000.
+
+```{r l8, fig.height=10,fig.width=10}
+set.seed(10072022)
+N=3e4
+t = seq(0,300,l=N)
+par(mar=2*c(1,1,1,1),bg="#fafafa")
+limits = c(-1,1)
+
+plot(NA, xlim=limits,ylim=limits,ax=F,an=F)
+for(j in 2*3^(seq(-4,4,1))){
+  points(y = sin(5*pi*t)^3,
+         x = cos(j*pi*t)^3,
+         type="p",
+         pch=20,
+         cex=rnorm(N)^1.0*.4*cos(t*pi/4+pi/3)+.05*(j==6)+.1*(j==2), # Random size
+         col=hsv(h=rnorm(N,.7,.1)%%1, # Random hue
+                 s=runif(N,0,1),      # Random saturation
+                 v=runif(N,0,1),      # Random value
+                 alpha=runif(N)))}    # Random alpha
+```
+
+
+I am delighted with this image. The left and right panels make a lovely counterpoint to each other, as does the relationship between the two 'major' paths in each.  The near-symmetry within each panel is an accident but adds to the composition.  The intersections between paths are particularly pleasing, and the density and distribution of the points feels very organic.  You could of course change the random number seed to get a different arrangement of sizes and colours.  
+
+The only thing I don't like so much is the very high density of points in the dead centre of the image.  I could try to artificially lighten this area but I don't think that would help much.  I also wonder if the overall colour and density is a little too uniform, but I can't imagine how this could be improved.
