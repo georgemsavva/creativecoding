@@ -5,12 +5,16 @@ date: "07/07/2022"
 execute:
   cache: false
 categories: [art, R]
-image: "mystery00436.png"
+image: "lc.png"
 ---
 
-This post describes how to create one of my favourite creations.  The process followed is more-or-less the process by which I came to the final image, but with a lot more trial and error along the way.  The image is based around Lissajous curves, which are widely used in mathematical art and were extensively explored by Jules Lissajous in  the 19th century.
+This post describes one of my favourite pieces of creative coding.  The process followed here is more-or-less the process by which I came to the final image, although there was a a lot more trial and error the first time around!  The work is based around *Lissajous curves*, which are widely used in mathematical art and take their name from Jules Lissajous who extensively explored them in the 19th century.
 
-An image search for 'Lissajous art' or similar will show you a lot of ways people have used Lissajous curves, or more generally harmonographs, to make beautiful images.  But I haven't seen anything quite like what is described here...
+An image search for 'Lissajous art' or similar will show you a lot of ways people have used Lissajous curves, or more generally harmonographs, to make beautiful images.
+
+Here's the final output we're aiming for in this post:
+
+![The finished product](lc.png)
 
 ## Lissajous curves
 
@@ -31,31 +35,28 @@ t = seq(0,10,0.01)
 x = sin(2*pi*t)
 y = cos(3*pi*t)
 
-limits = c(-1,1)
-plot(x,y,type="l",asp=1,xlim=limits,ylim=limits)
+plot(x,y,type="l",asp=1)
 
 ```
 
-By visualising the motion in both dimensions it should be clear how the shape comes about:
+By visualising the motion in both dimensions it should be clear how the shapes arise:
 
-```{r l1b, animation.hook='gifski',interval=.04}
-t = seq(0,10,0.01)
-
+```{r l1b, animation.hook='gifski',interval=.1}
+t = seq(0,2,0.01)
 x = sin(2*pi*t)
-y = cos(3*pi*t)
-
+y = cos(6*pi*t)
 limits = c(-1,1)
-for(i in seq(0,6,l=600)){
+
+for(i in seq(0,2,l=100)){
   plot(x,y,type="l",asp=1,xlim=1.2*limits,ylim=1.2*limits)
   lines(x=c(sin(2*i*pi),sin(2*i*pi),-1.1),
-        y=c(-1.1,cos(3*pi*i),cos(3*pi*i)),pch=20,type="o",lty="dashed")
-  
-}
+        y=c(-1.1,cos(6*pi*i),cos(6*pi*i)),pch=20,type="o",lty="dashed")
+  }
 
 
 ```
 
-By changing the frequencies we can generate some interesting patterns
+By changing the frequencies we can generate some familiar shapes:
 
 ```{r l2, animation.hook='gifski'}
 for(i in 1:4) for(j in 2:5){
@@ -67,7 +68,7 @@ for(i in 1:4) for(j in 2:5){
 
 ```
 
-There are lots of interesting things to do with Lissajous curves.  In particular you can overlay them, which lead to some interesting intersections:
+There are lots of interesting things to do with Lissajous curves.  Eg we can overlay lots of curves with different frequencies.
 
 ```{r l3, animation.hook='gifski'}
 plot(NA, xlim=limits,ylim=limits,asp=1)
@@ -77,23 +78,24 @@ for(i in 1:4) for(j in 2:5){
 
 ```
 
-Lets add a bit of colour, remove the axes and annotation etc.  Not great but you can start to see how you'd make something interesting..
+Now lets add a few more curves, think about how the colour and intensity should depend on the frequency, remove the axes and annotation etc.  This image isn't great but you can start to see how you'd make something interesting..
 
 ```{r l4}
-
 par(mar=c(1,1,1,1))
 plot(NA, xlim=limits,ylim=limits,asp=1,axes=F,ann=F)
-for(i in 1:4) for(j in 2:5){
-  points(x = sin(i*pi*t),y=cos(j*pi*t),type="l",
-         lwd=10/(i+j),
-         col=hsv(h=.5+j/10,
-         s=1,v=1,
-         alpha=1/(i+j-2)))
+for(i in 1:10) for(j in -10:10){
+  points(x = sin(i*pi*t),
+         y = cos(j*pi*t),type="l",
+         lwd=5/(abs(i-j)+2),
+         col=hsv(h=.5+j/20,
+         s=1/(abs(i-j)+2),
+         v=1-1/(abs(i-j)+2),
+         alpha=1/(abs(i-j)+2)))
 }
 
 ```
 
-These intersections aren't as interesting as they might be.  If we make the frequencies increase as a geometric rather than an arithmetic sequence there are more interesting patterns.
+We can make the frequencies increase as a geometric rather than an arithmetic sequence.  Here the $x$ frequency is fixed at 5 and the $y$ frequency varies from $2\times 2^{-4}$ to $2\times 2^4$.  Again this output isn't especially pretty but its the set of curves we ultimately use for the final output.
 
 ```{r l6}
 t = seq(0,10,0.001)
@@ -110,7 +112,11 @@ for(i in 5) for(a in (-4:4)){
 }
 ```
 
-The next image is exactly the same as the previous one, except that I have replaced $x$ with $x^3$ and $y$ with $y^3$.  I also swapped the $x$ and $y$ axes because the image looked nicer that way around.
+Now for the part where we diverge from classic Lissajous curve shape.
+
+The next image is the same as the previous one, except that I have replaced $x$ with $x^3$ and $y$ with $y^3$.  I also swapped the $x$ and $y$ axes because the image looked nicer that way around.
+
+Raising the $x$ and $y$ positions to the third power retains the range of the curve but bunches up the curves along the axes and makes the shapes more interesting.
 
 ```{r l6b}
 t = seq(0,10,0.001)
@@ -128,7 +134,9 @@ for(i in 5) for(a in (-4:4)){
 
 ```
 
-Instead of plotting the lines, we can plot points. Using random point sizes with random colours makes the image more interesting.  Something else interesting happens when we swicth to points; the shorter paths have denser points so they become more prominent in the image:
+The other major innovation is to plot points of random sizes instead of lines, to create the textured effect in the final image.  
+
+Something else interesting happens when we switch to points instead of lines; since each path has the same number of points the shorter paths become denser so they are more prominent in the image:
 
 ```{r l7}
 t = seq(0,50,l=1e4)
@@ -148,9 +156,13 @@ for(i in 5) for(a in (-4:4)){
 ```
 
 
-This is close to the image we want.  Tweaking some parameters can improve the balance between the curves, and  are happy with!  I have tweaked the point sizes a bit so they depend on which curve is being drawn, and rendered the image at higher resolution.  
+This is close to the final image!  Tweaking some parameters can improve the balance between the curves, and lead us to something we are happy with.
 
-The point hue is slightly random, there is an off-white background and the number of points per curve is 30000.
+The complete self-contained code for the final image is shown below.
+
+I have tweaked the point sizes a bit so they depend on which curve is being drawn, and used a normal distribution for the point sizes to get a longer tail of larger points.  
+
+The point hue is random, there is an off-white background and the number of points per curve is 30000.  The frequency is always 5 in the $y$ dimension, but varies from $2\times 3^-4$ to $2\times 3^4$ in the $x$ dimension.
 
 ```{r l8, fig.height=10,fig.width=10}
 set.seed(10072022)
@@ -173,6 +185,26 @@ for(j in 2*3^(seq(-4,4,1))){
 ```
 
 
-I am delighted with this image. The left and right panels make a lovely counterpoint to each other, as does the relationship between the two 'major' paths in each.  The near-symmetry within each panel is an accident but adds to the composition.  The intersections between paths are particularly pleasing, and the density and distribution of the points feels very organic.  You could of course change the random number seed to get a different arrangement of sizes and colours.  
+I am delighted with this image. The left and right panels make a lovely counterpoint to each other, as does the relationship between the two 'major' paths in each.  The near-symmetry within each panel is an accident but I think it adds a lot to the final composition.  'Cubing' the Lissajous curves makes them familiar but not too familiar, in my opinion purely sinusoidal shapes can be a bit dull.
+
+The intersections between paths are particularly pleasing, and the density and distribution of the points feels very organic.  You could of course change the random number seed to get a different arrangement of sizes and colours.  
 
 The only thing I don't like so much is the very high density of points in the dead centre of the image.  I could try to artificially lighten this area but I don't think that would help much.  I also wonder if the overall colour and density is a little too uniform, but I can't imagine how this could be improved.
+
+
+```{=html}
+<script src="https://giscus.app/client.js"
+        data-repo="georgemsavva/creativecoding"
+        data-repo-id="R_kgDOHRS9pg"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOHRS9ps4CO5d8"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+```
