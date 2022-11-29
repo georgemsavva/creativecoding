@@ -1,0 +1,128 @@
+---
+title: "A manifesto, and making a Mandlebot set"
+author: "George"
+date: "05/11/2022"
+execute:
+  cache: true
+categories: [art, R]
+---
+
+In this post I'll try to articulate why I make mathematical art, and use R to produce one of the most iconic mathart images: a Mandlebrot set.
+
+## Why make mathematical art?  
+
+Beauty
+
+Timeless and Universal
+
+Elegance
+
+Discovering nature
+
+Fun
+
+## The Mandlebrot set
+
+The Mandlebrot set feels like it has been around forever, but in fact it was first observed in the 1980s. 
+The reason for this is simple enough; to generate the Mandlebrot set or similar fractals you need to use a computer with a visual display.
+
+Its mathematical definition is incredibly simple.  For any 
+
+```{r }
+mandlebrot <- function(c,n){
+    z <- rep(0,length(c))
+    k <- rep(0,length(c))
+    for(i in 1:n){
+      index = which(Mod(z)<2)
+      k[index] <- k[index]+1
+      z[index] <- z[index]^2 + c[index]
+    }
+    k
+}
+
+
+biomorph <- function(z,c,p1,p2,t=10,N=10){
+    B = 0;
+    k <- z
+    for(i in 1:10) { 
+      index = (Im(k)<t) & (Re(k)<t)
+      index[is.na(index)]<- FALSE
+      k[index] <- sin(k[index])+
+        k[index]^p1 + c 
+      B[index] <- i
+    }
+
+    B
+}
+
+
+```
+
+```{r }
+mandleBrot(10)
+```
+
+```{r }
+
+
+res=3000
+x=seq(-1.5,1.5,l=res)
+y=seq(-1.5,1.5,l=res)
+d=expand.grid(x=x,y=y)
+d$z = d$x+1i*d$y
+#d$c = mandlebrot(d$z,100)
+d$c = biomorph(d$z,c = 0.5+1i*.2,2,0,t=100,N=50)
+
+library(ggplot2)
+library(viridis)
+library(gganimate)
+g1 <- ggplot(d, aes(x,y,fill=c)) + 
+  geom_raster() + 
+  theme_void() + 
+  scale_fill_viridis() + 
+  theme(legend.position = "none") + 
+  coord_fixed()
+#ggsave("mandlebrot1.png", g1)
+ggsave("biomorph1.png", g1, units = "px",width=res,height=res)
+```
+
+```{r}
+d2 <- expand.grid(x=seq(-2,-1.8,l=res),y=seq(-.1,.1,l=res))
+g2 <- ggplot(d2, aes(x,y,fill=mandlebrot(x+1i*y,10))) + 
+  geom_raster() + 
+  theme_void() + 
+  theme(legend.position = "none")+
+  scale_fill_viridis(option="magma")
+ggsave("mandlebrot1.png", g2)
+
+```
+
+```{r}
+res=100
+d1 <- expand.grid(x=seq(-2,2,l=res),y=seq(-2,2,l=res))
+d2 <- expand.grid(x=seq(-2,-1.8,l=res),y=seq(-.1,.1,l=res))
+d3 <- dplyr::bind_rows(d1,d2,.id="state")
+anim1 <- ggplot(d3, aes(x,y,fill=mandlebrot(x+1i*y,10))) + 
+  geom_raster() + 
+  theme_void() + 
+  theme(legend.position = "none")+
+  scale_fill_viridis(option="magma") + 
+  transition_states(state) + view_follow()
+  
+animate(anim1)
+
+ggsave("mandlebrot1.png", g2)
+
+library(tweenr)
+dt   <- tween_along(d3, along=state,ease=c(x="linear",y="linear",state="linear"),nframes=10)
+dt$c <- mandlebrot(dt$x+1i*dt$y,10)
+anim2 <- ggplot(dt, aes(x,y,fill=mandlebrot(x+1i*y,10))) + 
+  geom_raster() + 
+  theme_void() + 
+  theme(legend.position = "none")+
+  scale_fill_viridis(option="magma") + 
+  transition_manual(.frame)
+animate(anim2)
+
+
+```
