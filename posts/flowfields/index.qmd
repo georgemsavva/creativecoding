@@ -1,72 +1,102 @@
 ---
 title: "Flow fields"
 author: "George"
-date: "27/11/2022"
+date: "11/27/2022"
 execute:
   cache: true
 categories: [art, R]
-draft: true
+draft: false
 ---
 
-Flow fields, or vector fields, are common tool for producing generative art.
+This post is a bit of a mess as my method for generating and visualising flows evolved as I was writing it.  But this is art not software engineering so it'll do!   Flow fields, or vector fields, are common tool for producing generative art and there are guides to using them everwhere.  Here I document my particular approach, leading to this image:
 
-In short, every point a canvas is associated with a direction, and an image is made from following the directions to make non-overlapping paths around the canvas.  The most famous images based on flow fields right now are probably Tyler Hobbs's Fidenzas, but there are a lot of different.
+![Flow field](flow4.png)
 
-I didn't use field flows as I wasn't sure how I could add anything to what is already done, but lately I've had a couple of ideas that seem innovative, or at least produce outputs that don't look like anything else I've seen.
+I didn't use field flows for ages as I wasn't sure how I could add anything to what is already done, but lately I had a couple of ideas that seem innovative, or at least produce outputs that don't look like anything else I've seen, so I think its worth documenting.
 
-In this post I'll show how to get started with flow fields in R, and then illustrate how they are used in my latest project.
+So in this post I'll show an approach creating flow fields using R, and then illustrate how they are used in my latest project.
 
-## Visualising the vector field
+## Visualising a vector field
 
-As with the mystery curves we'll use complex numbers, because this makes maths in the 2D plane easy, and R makes working with complex numbers very natural.  Remember that direction is measured by the argument of a complex number.
+As with the mystery curves I use complex numbers, because this leads to some interesting maths in the 2D plane, and R makes working with complex numbers very natural.
+
+In this first simple example I create a matrix of starting positions, $z$, make a vector field $v$ by rotating the current position by just over 90 degrees to make a flow spiralling inward.
+
+Direction is measured by the argument of a complex number, so to keep the velocity of my flow constant I standardise $v$ by diving by $\left|v\right|$.
+
+Finally I increment the position using $z_{\text{new}}=z+0.1\times v$ and draw arrows to the new points.
 
 ```{r }
 set.seed(2911)
-library(ggplot2)
 library(data.table)
 
 N=20
 dat <- expand.grid(x=seq(-1,1,l=20), y=seq(-1,1,l=20))
 setDT(dat)
 
-dat[ , z := x+1i*y ]
-dat[ , v := complex(argument=Arg(z)+pi/2) ]
-dat[ , z2 := z + .1*v  ]
+dat[ , z := x+1i*y ]  # represent position as a complex number
+dat[ , v := z*exp(1i*3*pi/5) ] # create vector field
+dat[ , v := v/Mod(v) ]
 
-ggplot(dat) + aes(x,y) + 
-  geom_point()+
-  geom_segment(aes(xend = Re(z2), yend = Im(z2)), arrow = arrow(length=unit(0.05,"inches")))
+dat[ , znew := z + .1*v  ]
+
+plot(dat$z, pch=19)
+arrows(Re(dat$z), Im(dat$z), Re(dat$znew), Im(dat$znew), length=0.05)
 
 
 ```
 
-The functions I'm going to use for my vector fields are *rational functions*, defined by the ratios of two polynomials.
+## Adding streamlines
 
-I'll illustrate this with a simple polynomial first, turning my last code chunk into a function to plot a particular vector flow, then passing it my function:
+Streamlines are created by iterating the flow function.  I'll create a matrix called `pos` to store all the locations for plotting.
+
+```{r}
+# N streamlines and m iterations
+N=20
+m=100
+pos=matrix(nrow=N, ncol=m)
+startz = runif(N,-1,1) + 1i*runif(N,-1,1)
+pos[,1] <- startz
+for(i in 2:m){
+  v <- pos[,i-1]*exp(1i*3*pi/5)
+  pos[,i] <- pos[,i-1] + .1 * v/Mod(v)
+}
+```
+
+Now we can add the streamlines to the previous plot:
 
 ```{r }
-library(ggplot2)
-library(data.table)
+plot(dat$z, pch=19,col="grey")
+arrows(Re(dat$z), Im(dat$z), Re(dat$znew), Im(dat$znew), length=0.05,col="grey")
+apply(pos, 1, lines)
+```
 
 
+## Rational functions
 
-plotFlow <- function(FUN) {
+The functions I'm going to use for my vector fields are *rational functions*, defined by the ratios of two polynomials. So our flow has modulus 1 and argument:
 
-  N=20
+That is, 
+$$f(z)=\frac{\prod_{i=1}^{n}(z-a_i)}{\prod_{j=1}^{m}(z-b_j)}$$
+
+I'll illustrate this with a simple polynomial first, turning my last first chunk into a function to plot a particular vector flow, then passing it my function:
+
+```{r }
+# takes a function and draws the vector field. 
+plotFlow <- function(FUN,col="black") {
+
   dat <- expand.grid(x=seq(-1,1,l=20), y=seq(-1,1,l=20))
   setDT(dat)
   
-  dat[ , z := x+1i*y ]
-  dat[ , v := complex(argument=Arg(FUN(z))) ]
-  dat[ , z2 := z + .1*v  ]
-  
-  ggplot(dat) + aes(x,y) + 
-    geom_point()+
-    geom_segment(aes(xend = Re(z2), yend = Im(z2)), arrow = arrow(length=unit(0.05,"inches")))
+  dat[ , z := x+1i*y ]  # represent position as a complex number
+  dat[ , v := FUN(z) ]  # create vector field
+  dat[ , v := v/Mod(v) ]
+  dat[ , znew := z + .1*v  ]
+  plot(dat$z, pch=19,col=col)
+  arrows(Re(dat$z), Im(dat$z), Re(dat$znew), Im(dat$znew), length=0.05,col=col)
 }
 
-
-plotFlow( \(z) (z-.5)*(z+.5)*z )
+plotFlow( \(z) (z-.5)*(z+.5)*z)
 
 ```
 
@@ -81,91 +111,62 @@ plotFlow( \(z) (z-.5)*(z+.5)*z / ((z-0.5i+0.5)* (z+0.5i-0.5)*(z+.1-.1i)) )
 
 ```
 
-So far we've only plotted the vectors representing the direction of the flow at each point, rather than a path through the field itself.  Lets fix that by plotting the path from the point starting at (say) (0.5,0.5). 
-
-We'll make a vector to accommodate the points to be plotted, then let it flow around the canvas.
+Adding streamlines as previously:
 
 ```{r }
 flowFunction = \(z) (z-.5)*(z+.5)*z / ((z-0.5i+0.5)* (z+0.5i-0.5)*(z+.1-.1i))
-path <- -0.5 + -0.5i
-for(i in 2:1000)  path[i] = path[i-1] + 0.01 * flowFunction(path[i-1])
-```
 
-We can plot this path on top of our graph of the flow vectors:
+# N streamlines and m iterations
 
-```{r }
-plotFlow(flowFunction) + geom_line(data=data.frame(path) , aes(x=Re(path), y=Im(path)), col="red", lwd=2)
-```
+makeStreams <- function(startpos,m=100,FUN,d=0.1){
+  pos=matrix(nrow=N, ncol=m)
+  startz = runif(N,-1,1) + 1i*runif(N,-1,1)
+  pos[,1] <- startz
+  for(i in 2:m){
+    v <- FUN(pos[,i-1])
+    pos[,i] <- pos[,i-1] + d * v/Mod(v)
+  }
+  pos
+}
 
-Or just use base R to plot it on its own:
 
-```{r }
-plot(path, type="l")
-```
-
-Next, to get a classic flow field image we can start a few different paths from different random positions.  We'll make a matrix to store all of the paths, with one row per path:
-
-```{r }
 N=100
-M=1000
+startZ <- runif(N, -1,1) + 1i*runif(N, -1,1)
 
-path_points <- matrix(nrow=N, ncol=M)
+pos <- makeStreams(startZ, FUN = flowFunction)
 
-path_points[,1] <- runif(N, -1,1) + 1i*runif(N,-1,1)
-for(i in 2:M) path_points[,i] <- path_points[,i-1] + .01 * flowFunction(path_points[,i-1])
-
-
+plotFlow(flowFunction, col="grey")
+apply(pos, 1, lines)
 
 ```
-
-Now we can plot these using ggplot()
-
-```{r }
-reshape2::melt(path_points) |>
-  ggplot(aes(x=Re(value), y=Im(value))) + geom_path(aes(group=Var1)) + 
-  coord_cartesian(xlim=c(-1,1), ylim=c(-1,1))
-```
-
-Or with base R:
-
-```{r }
-plot(NA, xlim=c(-1,1), ylim=c(-1,1))
-for(i in 1:N) lines(path_points[i,])
-```
-
 
 So we have a system for making field flow images.  We define a function for our vector field, then pick starting points and interate to create the subsequent paths.
 
-The artistic elements now all come from how we choose the function and start positions, and how we iterate and represent the paths we create.
+The artistic elements now all come from how we choose the function and start positions, and how we draw the paths we create.
 
 If we massively increase the number of paths but reduce the number of iterations:
 
 ```{r }
-N=10000
-M=100
-
-path_points <- matrix(nrow=N, ncol=M)
-
-path_points[,1] <- runif(N, -1,1) + 1i*runif(N,-1,1)
-for(i in 2:M) path_points[,i] <- path_points[,i-1] + .01 * flowFunction(path_points[,i-1])
-
+N=1000
+M=1000
+startZ <- runif(N, -1,1) + 1i*runif(N,-1,1)
+pos <- makeStreams(startZ,FUN=flowFunction,d=0.01)
 plot(NA, xlim=c(-1,1), ylim=c(-1,1))
-for(i in 1:N) lines(path_points[i,])
-
+apply(pos, 1, lines)
 ```
 
-This is a bit dense so we can reduce the intensity of the points.
+This is a bit dense.  If we just draw points instead of lines we can control the density a bit more, and we can use the `scattermore` library to speed up the plotting enormously:
 
 ```{r }
-plot(NA, xlim=c(-1,1), ylim=c(-1,1))
-for(i in 1:N) points(path_points[i,], pch=".", col=hsv(0,0,0,0.1))
+library(scattermore)
+pos <- cbind(Re(as.vector(pos)), Im(as.vector(pos)))
+scattermoreplot(pos,size=c(800,600), xlim=c(-1,1), ylim=c(-1,1))
 ```
 
 Before we go any further, lets have a look at the implications of choosing specific roots for the polynomials in our rational function.  The numerator here has roots at $0.5$, $-0.5$ and $0$.  The denominator's root are at $-0.5+0.5i$, $0.5-0.5i$, and $-0.1+0.1i$.  Lets add these points onto the graph to see how they interact with the flow:
 
 ```{r }
-plot(NA, xlim=c(-1,1), ylim=c(-1,1))
-for(i in 1:N) points(path_points[i,], pch=".", col=hsv(0,0,0,0.1))
+scattermoreplot(pos,width=c(800,600), xlim=c(-1,1), ylim=c(-1,1))
 points(c(-0.5+0.5i, 0.5-0.5i,-0.1+0.1i), col="blue", cex=2,pch=4, lwd=4)
 points(c(-0.5+0i, 0.5,0), col="red", cex=2,pch=1, lwd=4)
 ```
@@ -174,141 +175,293 @@ It seems at least in this case that the roots of the numerator (red dots) repres
 
 In fact, this property generally holds true, the zeros of our rational function will be sinks or sources, whereas the poles will be saddle points.  We can prove this by noting that the argument of our rational function will be the sum of the arguments of the respective terms, and by thinking about how this sum changes as we move around a small area close to one of the poles or zeros.  
 
-In our image so far paths are starting from their randomly generated positions, and then flowing toward a sink or off the page.  I think this looks messy, I would rather include the entire flow lines, and so I will add the flows both forwards and backwards from each start point.  This way I generate the entire flow passing through each point, rather than just a random portion of it:
+In our image so far paths are starting from their randomly generated positions, and then flowing toward a sink or off the page.  I think this looks messy, I would rather include the entire flow lines, and so I will add the flows both forwards and backwards from each start point.  This way I generate the entire flow passing through each point, rather than just a random portion of it.  
+
+I'm also changing the `makeStreams` function to return two column matrix of `x` and `y` positions in the form that `scattermoreplot` expects.
 
 ```{r }
-N=10000
-M=100
+makeStreams <- function(startpos,m=100,FUN,d=0.1){
+  pos=matrix(nrow=length(startpos), ncol=m)
+  pos2=matrix(nrow=length(startpos), ncol=m)
+  pos[,1] <- startpos
+  pos2[,m] <- startpos
+  for(i in 2:m){
+    v <- FUN(pos[,i-1])
+    pos[,i] <- pos[,i-1] + d * v/Mod(v)
+  }
+  for(i in (m-1):1){
+    v <- FUN(pos2[,i+1])
+    pos2[,i] <- pos2[,i+1] - d * v/Mod(v)
+  }
+  pos <-cbind(pos,pos2) |> as.vector()
+  cbind(Re(pos),Im(pos))
+}
 
-path_points_forward <- matrix(nrow=N, ncol=M)
-path_points_backward <- matrix(nrow=N, ncol=M)
+pos <- makeStreams(startZ, FUN=flowFunction,d=0.01)
 
-path_points_forward[,1] <- runif(N, -1,1) + 1i*runif(N,-1,1)
-for(i in 2:M) path_points_forward[,i] <- path_points_forward[,i-1] + .01 * flowFunction(path_points_forward[,i-1])
-
-path_points_backward[,1] <- path_points_forward[,1]
-for(i in 2:M) path_points_backward[,i] <- path_points_backward[,i-1] - .01 * flowFunction(path_points_backward[,i-1])
-
-
-plot(NA, xlim=c(-1,1), ylim=c(-1,1))
-for(i in 1:N) points(path_points_forward[i,], pch=".", col=hsv(0,0,0,0.1))
-for(i in 1:N) points(path_points_backward[i,], pch=".", col=hsv(0,0,0,0.1))
-
+scattermoreplot(pos,size=c(1000,1000), xlim=c(-1,1), ylim=c(-1,1))
 ```
 
 We can make a couple of easy improvements.  First by squaring the aspect ratio of the plot, second by altering the spacing between the points.  At the moment it is fixed, leading to some unintended patterns in the plot points, but we can easily set it to be random:
 
 ```{r fig.height=6, fig.width=6}
-N=10000
-M=100
+makeStreams <- function(startpos,m=100,FUN,d=0.1){
+  N=length(startpos)
+  pos=matrix(nrow=N, ncol=m)
+  pos2=matrix(nrow=N, ncol=m)
+  pos[,1] <- startpos
+  pos2[,m] <- startpos
+  for(i in 2:m){
+    v <- FUN(pos[,i-1])
+    pos[,i] <- pos[,i-1] + runif(N,0,2)*d * v/Mod(v)
+  }
+  for(i in (m-1):1){
+    v <- FUN(pos2[,i+1])
+    pos2[,i] <- pos2[,i+1] - runif(N,0,2)*d* v/Mod(v)
+  }
+  pos <-cbind(pos,pos2) |> as.vector()
+  cbind(Re(pos),Im(pos))
+}
 
-path_points_forward <- matrix(nrow=N, ncol=M)
-path_points_backward <- matrix(nrow=N, ncol=M)
-
-path_points_forward[,1] <- runif(N, -1,1) + 1i*runif(N,-1,1)
-for(i in 2:M) path_points_forward[,i] <- path_points_forward[,i-1] + runif(N,0,.02) * flowFunction(path_points_forward[,i-1])
-
-path_points_backward[,1] <- path_points_forward[,1]
-for(i in 2:M) path_points_backward[,i] <- path_points_backward[,i-1] - runif(N,0,0.02) *
-  flowFunction(path_points_backward[,i-1])
+pos <- makeStreams(startZ, FUN=flowFunction,d=0.01)
 
 par(mar=c(1,1,1,1))
-plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=0,axes=F)
-for(i in 1:N) points(path_points_forward[i,], pch=".", col=hsv(0,0,0,0.1))
-for(i in 1:N) points(path_points_backward[i,], pch=".", col=hsv(0,0,0,0.1))
+scattermoreplot(pos, size=c(1000,1000),xlim=c(-1,1), ylim=c(-1,1),asp=1,col=hsv(0,0,0,.5))
 
 ```
 
-This image isn't particularly appealing, but now that we have this system we can make a lot of beautiful images just choosing (a) the locations of the poles and zeros of our flow function and (b) choosing the starting points of the flows.
+## More complex flow functions
+
+This image isn't particularly appealing, but now that we have this system we can make a lot of beautiful images just choosing the locations of the poles and zeros of our flow function, the starting points of the flows and how they are rendered.
 
 First, lets add some more poles and zeros to our flow function.  Our original function had three poles and three zeros. Here I'm going to add 20 poles and 20 zeros, choosing the location of each randomly within the canvas.
 
-```{r }
+```{r fig.height=6, fig.width=6}
+
+# Choose the location of the poles and zeros
 poles <- runif(20,-1,1) + 1i*runif(20,-1,1)
 zeros <- runif(20,-1,1) + 1i*runif(20,-1,1)
+
+# Our flow function
 flowFunction <- function(z) {
   fz = z-zeros[1]
   for(i in zeros[-1]) fz = fz * (z-i)
   for(i in poles) fz = fz / (z-i)
   fz/Mod(fz)
   }
+
+# Make the streams positions
+pos <- makeStreams(startZ,m=500,FUN=flowFunction,d=0.002)
+
+# Plot
+par(mar=c(1,1,1,1))
+scattermoreplot(pos,size=c(1000,1000), xlim=c(-1,1), ylim=c(-1,1),asp=1,axes=F)
 ```
+
+### Choosing which streamlines to plot by setting the starting points
+
+Next lets alter the starting positions of the flows.  In the image above they are randomly selected throughout the canvas, but I could instead start them in a ring of radius 0.5 around the canvas centre.  So here we're seeing every streamline that passes through that ring.
+
+The number of poles and zeros is also reduced.  
+
+```{r fig.height=6, fig.width=6}
+startZ <- 0.6*exp(2i * pi * seq(0,1,l=300))
+
+set.seed(123)
+poles <- runif(5,-1,1) + 1i*runif(5,-1,1)
+zeros <- runif(10,-1,1) + 1i*runif(10,-1,1)
+
+pos <- makeStreams(startZ,m=1000,FUN=flowFunction,d=0.002)
+
+par(mar=c(1,1,1,1))
+scattermoreplot(pos,size=c(1000,1000), xlim=c(-1,1), ylim=c(-1,1),asp=1,axes=F,col=hsv(0,0,0))
+
+```
+
+Next exactly the same flow field but with many more streamlines (10000 vs 300) but each with fewer points included creates an effect that looks more like shading:
+
+```{r fig.height=6, fig.width=6}
+startZ <- 0.6*exp(2i * pi * seq(0,1,l=10000))
+pos <- makeStreams(startZ,m=200,FUN=flowFunction,d=0.005)
+par(mar=c(1,1,1,1))
+scattermoreplot(pos,size=c(3000,3000), xlim=c(-1,1), ylim=c(-1,1),asp=1,axes=F,col=hsv(0,0,0))
+```
+
+Or we could start them at random points along a line passing through the origin:
 
 ```{r fig.height=6, fig.width=6}
 N=5000
 M=200
 
-path_points_forward <- matrix(nrow=N, ncol=M)
-path_points_backward <- matrix(nrow=N, ncol=M)
+startZ <- runif(N,-1,1)*(1 + 1i*runif(1,-.5,.5))
 
-path_points_forward[,1] <- runif(N,-1,1) + 1i*runif(N,-1,1)
-
-for(i in 2:M) path_points_forward[,i] <- path_points_forward[,i-1] + runif(N,0,0.01) * 
-  flowFunction(path_points_forward[,i-1])
-
-path_points_backward[,1] <- path_points_forward[,1]
-for(i in 2:M) path_points_backward[,i] <- path_points_backward[,i-1] - runif(N,0,0.01) *
-  flowFunction(path_points_backward[,i-1])
+pos <- makeStreams(startZ,m=200,FUN=flowFunction,d=0.01)
 
 par(mar=c(1,1,1,1))
-plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=0,axes=F)
-for(i in 1:M) points(path_points_forward[,i], pch=".", col=hsv(0,0,0,0.1))
-for(i in 1:M) points(path_points_backward[,i], pch=".", col=hsv(0,0,0,0.1))
+scattermoreplot(pos,size=c(2000,2000), xlim=c(-1,1), ylim=c(-1,1),asp=1,axes=F)
+```
+
+### Choosing locations for the poles and zeros
+
+Here I add 10 poles and 20 zeros arranges in a circle with radius 0.5.
+
+```{r fig.height=6, fig.width=6, fig.dpi=300}
+
+poles <- exp(2i*pi*runif(5))*0.3
+zeros <- exp(2i*pi*runif(10))*0.3
+
+startZ = runif(10000, -1,1) + 1i*runif(10000,-1,1)
+
+pos <- makeStreams(startZ,m=500,FUN=flowFunction,d=0.001)
+
+par(mar=c(1,1,1,1))
+scattermoreplot(pos,size=c(3000,3000),xlim=c(-1,1), ylim=c(-1,1),axes=F,
+                col=hsv(0,0,0,.5))
 
 ```
 
-Next lets alter the starting positions of the flows.  In the image above they are randomly selected throughout the canvas, but I could instead start them in a ring around the canvas centre:
+## A few more examples
 
-```{r fig.height=6, fig.width=6}
-N=5000
-M=200
+Finally I'll show a few more examples of different outputs from this system.  Most have an element of randomness since the locations of the poles and zeros are selected randomly.  Rerunning the code, or changing the seed where it is set, will lead to a different image.
 
-path_points_forward <- matrix(nrow=N, ncol=M)
-path_points_backward <- matrix(nrow=N, ncol=M)
+White on black works quite well.
 
-path_points_forward[,1] <- 0.4*exp(2i * pi * seq(0,1,l=N))
+```{r fig.height=6, fig.width=6, fig.dpi=300}
 
-for(i in 2:M) path_points_forward[,i] <- path_points_forward[,i-1] + runif(N,0,0.01) * 
-  flowFunction(path_points_forward[,i-1])
+poles <- exp(2i*pi*runif(10))*0.4
+zeros <- exp(2i*pi*runif(20))*0.4
 
-path_points_backward[,1] <- path_points_forward[,1]
-for(i in 2:M) path_points_backward[,i] <- path_points_backward[,i-1] - runif(N,0,0.01) *
-  flowFunction(path_points_backward[,i-1])
+startZ <- 0.7*exp(2i * pi * seq(0,1,l=20000))
+pos <- makeStreams(startZ,m=300,FUN=flowFunction,d=0.01)
 
-par(mar=c(1,1,1,1))
-plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=0,axes=F)
-for(i in 2:M) points(path_points_forward[,i], pch=".", col=hsv(0,0,0,0.1))
-for(i in 2:M) points(path_points_backward[,i], pch=".", col=hsv(0,0,0,0.1))
+  par(mar=c(1,1,1,1), bg="#111111")
+  scattermoreplot(pos, 
+                size=c(1800,1800),
+                xlim=c(-1,1), 
+                ylim=c(-1,1), 
+                col=hsv(1,0,1,.1),
+                axes=F)
+```
+
+I've left the ring of starting points visible on the image because I think it looks nice, but you could easily modify the `makeStreams` function to remove the starting points from the `pos` matrix.
+
+For the next image, two concentric circles of starting points, one inside and one outside the ring of poles and zeros:
+
+```{r fig.height=6, fig.width=6, fig.dpi=300}
+set.seed(1214)
+polesandzeros <- .5*exp(2i*pi*seq(0,1,l=50)[-1])
+pole = rbinom(20, 1,0.6)
+poles = polesandzeros[pole==1]
+zeros = polesandzeros[pole==0]
+
+N=20000
+startZ <- c(
+  0.3*exp(2i * pi * seq(0,1,l=N/2)),
+  0.7*exp(2i * pi * seq(0,1,l=N/2))
+  )
+
+pos <- makeStreams(startZ,m=300,FUN=flowFunction,d=0.01)
+
+  par(mar=0*c(1,1,1,1), bg="#111111")
+  scattermoreplot(pos, 
+                size=c(1800,1800),
+                xlim=c(-1,1), 
+                ylim=c(-1,1), 
+                col=hsv(1,0,1,.1),
+                axes=F)
+```
+
+The poles and zeros can be arranged along a polynomial, with four different circles providing starting positions for the flows.
+
+The colour is fixed within each streamline but the saturation varies between them.
+
+Four circles provide starting points:
+
+```{r fig.height=6, fig.width=6, fig.dpi=300}
+set.seed(1214)
+polesandzeros <- .5*exp(2i*pi*seq(0,1,l=40)[-1])
+polesandzeros <- seq(-1,1,l=40)-0.5i*seq(-1,1,l=40) + .7i*seq(-1,1,l=40)^2 - .3i
+pole = rbinom(39, 1,0.6)
+poles = polesandzeros[pole==1]
+zeros = polesandzeros[pole==0]
+
+startZ <- c(
+  0.3*exp(2i * pi * seq(0,1,l=N/4))-0.3-0.3i,
+  0.2*exp(2i * pi * seq(0,1,l=N/4))+0.3-0.3i,
+  0.15*exp(2i * pi * seq(0,1,l=N/4))-0.6+0.6i,
+  0.5*exp(2i * pi * seq(0,1,l=N/4))+0.3+0.3i
+  )
+  
+pos <- makeStreams(startZ,m=300,FUN=flowFunction,d=0.01)
+
+par(mar=0*c(1,1,1,1), bg="#111111")
+scattermoreplot(pos,size=c(1800,1800),
+                xlim=c(-1,1), 
+                ylim=c(-1,1), 
+                col=hsv(0,rep(seq(0,1,l=N/4),4*600),1,0.1),
+                axes=F)
 
 ```
 
-Or we could start them along a line going through the origin:
+Now here's the code for the cover image for this post.
+
+The poles and zeros are set along the same polynomial as in the previous example.  The starting points are arranged in six concentric circles, and the streamlines from each have a different colour between red and blue.
 
 
-```{r fig.height=6, fig.width=6}
-N=5000
-M=200
+```{r fig.height=6, fig.width=6, eval=FALSE}
 
-path_points_forward <- matrix(nrow=N, ncol=M)
-path_points_backward <- matrix(nrow=N, ncol=M)
+set.seed(1211)
 
-path_points_forward[,1] <- runif(N,-1,1)*(1 + 1i*runif(1,-.5,.5))
+polesandzeros <- seq(-1,1,l=40)-0.5i*seq(-1,1,l=40) + .7i*seq(-1,1,l=40)^2 - .3i
 
-for(i in 2:M) path_points_forward[,i] <- path_points_forward[,i-1] + runif(N,0,0.01) * 
-  flowFunction(path_points_forward[,i-1])
+pole = rbinom(39, 1,0.5)
+poles = polesandzeros[pole==1]
+zeros = polesandzeros[pole==0]
 
-path_points_backward[,1] <- path_points_forward[,1]
-for(i in 2:M) path_points_backward[,i] <- path_points_backward[,i-1] - runif(N,0,0.01) *
-  flowFunction(path_points_backward[,i-1])
+N=60000
+startZ <- c(
+  0.5*exp(2i * pi * seq(0,1,l=N/6)),
+  0.3*exp(2i * pi * seq(0,1,l=N/6)),
+  0.4*exp(2i * pi * seq(0,1,l=N/6)),
+  0.6*exp(2i * pi * seq(0,1,l=N/6)),
+  0.8*exp(2i * pi * seq(0,1,l=N/6)),
+  1.0*exp(2i * pi * seq(0,1,l=N/6))
+  )
+  
+pos <- makeStreams(startZ,m=500,FUN=flowFunction,d=0.005)
 
-par(mar=c(1,1,1,1))
-plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=0,axes=F)
-for(i in 2:M) points(path_points_forward[,i], pch=".", col=hsv(0,0,0,0.1))
-for(i in 2:M) points(path_points_backward[,i], pch=".", col=hsv(0,0,0,0.1))
+col=rep(c(hsv(0,  1,0.5,0.4),
+          hsv(0.0,1,0.5,0.4),
+          hsv(0.1,1,0.5,0.4),
+          hsv(0.9,1,0.5,0.4),
+          hsv(0.8,1,0.5,0.4),
+          hsv(1,  1,0.5,0.1)
+          ), each=N/6)
+col <- rep(col,1000)
 
+par(mar=0.1*c(1,1,1,1), bg="#dddddd")
+scattermoreplot(pos,size=c(3000,3000),
+                xlim=c(-1,1), 
+                ylim=c(-1,1), 
+                col=col,
+                axes=F)
 ```
 
+![](flow4.png)
 
 
+## A few more nice outputs
 
+These are selected from randomly generated images based on the system described above, with various combinations of starting points and rational flow functions.
 
+::: {layout-nrow=2}
+
+![](flow00710.png)
+
+![](flow00559.png)
+
+![](flow01399.png)
+
+![](flow01384.png)
+
+::: 
