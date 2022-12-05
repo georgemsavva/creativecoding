@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="George">
-<meta name="dcterms.date" content="2024-03-11">
+<meta name="dcterms.date" content="2022-11-27">
 
 <title>Mathematical Art and Creative Coding - Flow fields</title>
 <style>
@@ -195,7 +195,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 11, 2024</p>
+      <p class="date">November 27, 2022</p>
     </div>
   </div>
     
@@ -204,285 +204,494 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header>
 
-<p>Flow fields, or vector fields, are common tool for producing generative art.</p>
-<p>In short, every point a canvas is associated with a direction, and an image is made from following the directions to make non-overlapping paths around the canvas. The most famous images based on flow fields right now are probably Tyler Hobbs’s Fidenzas, but there are a lot of different.</p>
-<p>I didn’t use field flows as I wasn’t sure how I could add anything to what is already done, but lately I’ve had a couple of ideas that seem innovative, or at least produce outputs that don’t look like anything else I’ve seen.</p>
-<p>In this post I’ll show how to get started with flow fields in R, and then illustrate how they are used in my latest project.</p>
-<section id="visualising-the-vector-field" class="level2">
-<h2 class="anchored" data-anchor-id="visualising-the-vector-field">Visualising the vector field</h2>
-<p>As with the mystery curves we’ll use complex numbers, because this makes maths in the 2D plane easy, and R makes working with complex numbers very natural. Remember that direction is measured by the argument of a complex number.</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-1_1458c2c00f657609136839e907ad8fcc">
+<p>This post is a bit of a mess as my method for generating and visualising flows evolved as I was writing it. But this is art not software engineering so it’ll do! Flow fields, or vector fields, are common tool for producing generative art and there are guides to using them everwhere. Here I document my particular approach, leading to this image:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="flow4.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Flow field</figcaption><p></p>
+</figure>
+</div>
+<p>I didn’t use field flows for ages as I wasn’t sure how I could add anything to what is already done, but lately I had a couple of ideas that seem innovative, or at least produce outputs that don’t look like anything else I’ve seen, so I think its worth documenting.</p>
+<p>So in this post I’ll show an approach creating flow fields using R, and then illustrate how they are used in my latest project.</p>
+<section id="visualising-a-vector-field" class="level2">
+<h2 class="anchored" data-anchor-id="visualising-a-vector-field">Visualising a vector field</h2>
+<p>As with the mystery curves I use complex numbers, because this leads to some interesting maths in the 2D plane, and R makes working with complex numbers very natural.</p>
+<p>In this first simple example I create a matrix of starting positions, <span class="math inline">\(z\)</span>, make a vector field <span class="math inline">\(v\)</span> by rotating the current position by just over 90 degrees to make a flow spiralling inward.</p>
+<p>Direction is measured by the argument of a complex number, so to keep the velocity of my flow constant I standardise <span class="math inline">\(v\)</span> by diving by <span class="math inline">\(\left|v\right|\)</span>.</p>
+<p>Finally I increment the position using <span class="math inline">\(z_{\text{new}}=z+0.1\times v\)</span> and draw arrows to the new points.</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-1_acee7c896c9de0e7d1237c94b6cbfe47">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2911</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">20</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>), <span class="at">y=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>))</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">setDT</span>(dat)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>dat[ , z <span class="sc">:</span><span class="er">=</span> x<span class="sc">+</span>1i<span class="sc">*</span>y ]</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>dat[ , v <span class="sc">:</span><span class="er">=</span> <span class="fu">complex</span>(<span class="at">argument=</span><span class="fu">Arg</span>(z)<span class="sc">+</span>pi<span class="sc">/</span><span class="dv">2</span>) ]</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>dat[ , z2 <span class="sc">:</span><span class="er">=</span> z <span class="sc">+</span> .<span class="dv">1</span><span class="sc">*</span>v  ]</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dat) <span class="sc">+</span> <span class="fu">aes</span>(x,y) <span class="sc">+</span> </span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">xend =</span> <span class="fu">Re</span>(z2), <span class="at">yend =</span> <span class="fu">Im</span>(z2)), <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">length=</span><span class="fu">unit</span>(<span class="fl">0.05</span>,<span class="st">"inches"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">20</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>), <span class="at">y=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">setDT</span>(dat)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>dat[ , z <span class="sc">:</span><span class="er">=</span> x<span class="sc">+</span>1i<span class="sc">*</span>y ]  <span class="co"># represent position as a complex number</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>dat[ , v <span class="sc">:</span><span class="er">=</span> z<span class="sc">*</span><span class="fu">exp</span>(1i<span class="sc">*</span><span class="dv">3</span><span class="sc">*</span>pi<span class="sc">/</span><span class="dv">5</span>) ] <span class="co"># create vector field</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>dat[ , v <span class="sc">:</span><span class="er">=</span> v<span class="sc">/</span><span class="fu">Mod</span>(v) ]</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>dat[ , znew <span class="sc">:</span><span class="er">=</span> z <span class="sc">+</span> .<span class="dv">1</span><span class="sc">*</span>v  ]</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dat<span class="sc">$</span>z, <span class="at">pch=</span><span class="dv">19</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">arrows</span>(<span class="fu">Re</span>(dat<span class="sc">$</span>z), <span class="fu">Im</span>(dat<span class="sc">$</span>z), <span class="fu">Re</span>(dat<span class="sc">$</span>znew), <span class="fu">Im</span>(dat<span class="sc">$</span>znew), <span class="at">length=</span><span class="fl">0.05</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>The functions I’m going to use for my vector fields are <em>rational functions</em>, defined by the ratios of two polynomials.</p>
-<p>I’ll illustrate this with a simple polynomial first, turning my last code chunk into a function to plot a particular vector flow, then passing it my function:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-2_6b498a45c272c140e1d5f927edc343eb">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>plotFlow <span class="ot">&lt;-</span> <span class="cf">function</span>(FUN) {</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  N<span class="ot">=</span><span class="dv">20</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>), <span class="at">y=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>))</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setDT</span>(dat)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  dat[ , z <span class="sc">:</span><span class="er">=</span> x<span class="sc">+</span>1i<span class="sc">*</span>y ]</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  dat[ , v <span class="sc">:</span><span class="er">=</span> <span class="fu">complex</span>(<span class="at">argument=</span><span class="fu">Arg</span>(<span class="fu">FUN</span>(z))) ]</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  dat[ , z2 <span class="sc">:</span><span class="er">=</span> z <span class="sc">+</span> .<span class="dv">1</span><span class="sc">*</span>v  ]</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(dat) <span class="sc">+</span> <span class="fu">aes</span>(x,y) <span class="sc">+</span> </span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>()<span class="sc">+</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">xend =</span> <span class="fu">Re</span>(z2), <span class="at">yend =</span> <span class="fu">Im</span>(z2)), <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">length=</span><span class="fu">unit</span>(<span class="fl">0.05</span>,<span class="st">"inches"</span>)))</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="fu">plotFlow</span>( \(z) (z<span class="fl">-.5</span>)<span class="sc">*</span>(z<span class="fl">+.5</span>)<span class="sc">*</span>z )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="adding-streamlines" class="level2">
+<h2 class="anchored" data-anchor-id="adding-streamlines">Adding streamlines</h2>
+<p>Streamlines are created by iterating the flow function. I’ll create a matrix called <code>pos</code> to store all the locations for plotting.</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-2_7a43fe838c58b14183b5c3ff497a9157">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># N streamlines and m iterations</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">20</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="dv">100</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>pos<span class="ot">=</span><span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>m)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>startz <span class="ot">=</span> <span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>pos[,<span class="dv">1</span>] <span class="ot">&lt;-</span> startz</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>m){</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> pos[,i<span class="dv">-1</span>]<span class="sc">*</span><span class="fu">exp</span>(1i<span class="sc">*</span><span class="dv">3</span><span class="sc">*</span>pi<span class="sc">/</span><span class="dv">5</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  pos[,i] <span class="ot">&lt;-</span> pos[,i<span class="dv">-1</span>] <span class="sc">+</span> .<span class="dv">1</span> <span class="sc">*</span> v<span class="sc">/</span><span class="fu">Mod</span>(v)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we can add the streamlines to the previous plot:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-3_6c6631e0d2d6c9a3c56bb8d6a40ae937">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dat[ , <span class="fu">plot</span>(z, <span class="at">pch=</span><span class="dv">19</span>,<span class="at">col=</span><span class="st">"grey"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat[ , <span class="fu">arrows</span>(<span class="fu">Re</span>(z), <span class="fu">Im</span>(z), <span class="fu">Re</span>(znew), <span class="fu">Im</span>(znew), <span class="at">length=</span><span class="fl">0.05</span>,<span class="at">col=</span><span class="st">"grey"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(pos, <span class="dv">1</span>, lines)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+</div>
+</section>
+<section id="rational-functions" class="level2">
+<h2 class="anchored" data-anchor-id="rational-functions">Rational functions</h2>
+<p>The functions I’m going to use for my vector fields are <em>rational functions</em>, defined by the ratios of two polynomials. So our flow has modulus 1 and argument:</p>
+<p>That is, <span class="math display">\[f(z)=\frac{\prod_{i=1}^{n}(z-a_i)}{\prod_{j=1}^{m}(z-b_j)}\]</span></p>
+<p>I’ll illustrate this with a simple polynomial first, turning my last first chunk into a function to plot a particular vector flow, then passing it my function:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-4_7bfdef0ddb6bd884f61dfa82449fd11b">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># takes a function and draws the vector field. </span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>plotFlow <span class="ot">&lt;-</span> <span class="cf">function</span>(FUN,<span class="at">col=</span><span class="st">"black"</span>) {</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>), <span class="at">y=</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20</span>))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setDT</span>(dat)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  dat[ , z <span class="sc">:</span><span class="er">=</span> x<span class="sc">+</span>1i<span class="sc">*</span>y ]  <span class="co"># represent position as a complex number</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  dat[ , v <span class="sc">:</span><span class="er">=</span> <span class="fu">FUN</span>(z) ]  <span class="co"># create vector field</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  dat[ , v <span class="sc">:</span><span class="er">=</span> v<span class="sc">/</span><span class="fu">Mod</span>(v) ]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  dat[ , znew <span class="sc">:</span><span class="er">=</span> z <span class="sc">+</span> .<span class="dv">1</span><span class="sc">*</span>v  ]</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(dat<span class="sc">$</span>z, <span class="at">pch=</span><span class="dv">19</span>,<span class="at">col=</span>col)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrows</span>(<span class="fu">Re</span>(dat<span class="sc">$</span>z), <span class="fu">Im</span>(dat<span class="sc">$</span>z), <span class="fu">Re</span>(dat<span class="sc">$</span>znew), <span class="fu">Im</span>(dat<span class="sc">$</span>znew), <span class="at">length=</span><span class="fl">0.05</span>,<span class="at">col=</span>col)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="fu">plotFlow</span>( \(z) (z<span class="fl">-.5</span>)<span class="sc">*</span>(z<span class="fl">+.5</span>)<span class="sc">*</span>z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Now we can just call this plotting function with whatever flow function we like. For example, lets plot the vectors associated with</p>
 <p><span class="math display">\[f(z)=\frac{z(z-0.5)(z+0.5)}{(z-0.5i+0.5)(z+0.5i-0.5)(z+0.1-0.1i)}\]</span></p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-3_fb9607d6b57c3c93dad595817f3ef254">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotFlow</span>( \(z) (z<span class="fl">-.5</span>)<span class="sc">*</span>(z<span class="fl">+.5</span>)<span class="sc">*</span>z <span class="sc">/</span> ((z<span class="fl">-0.5</span>i<span class="fl">+0.5</span>)<span class="sc">*</span> (z<span class="fl">+0.5</span>i<span class="fl">-0.5</span>)<span class="sc">*</span>(z<span class="fl">+.1-.1</span>i)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>So far we’ve only plotted the vectors representing the direction of the flow at each point, rather than a path through the field itself. Lets fix that by plotting the path from the point starting at (say) (0.5,0.5).</p>
-<p>We’ll make a vector to accommodate the points to be plotted, then let it flow around the canvas.</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-4_5f15b2dd4f8d49a395380ad404ea13f3">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>flowFunction <span class="ot">=</span> \(z) (z<span class="fl">-.5</span>)<span class="sc">*</span>(z<span class="fl">+.5</span>)<span class="sc">*</span>z <span class="sc">/</span> ((z<span class="fl">-0.5</span>i<span class="fl">+0.5</span>)<span class="sc">*</span> (z<span class="fl">+0.5</span>i<span class="fl">-0.5</span>)<span class="sc">*</span>(z<span class="fl">+.1-.1</span>i))</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>path <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fl">0.5</span> <span class="sc">+</span> <span class="sc">-</span><span class="fl">0.5</span>i</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">1000</span>)  path[i] <span class="ot">=</span> path[i<span class="dv">-1</span>] <span class="sc">+</span> <span class="fl">0.01</span> <span class="sc">*</span> <span class="fu">flowFunction</span>(path[i<span class="dv">-1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We can plot this path on top of our graph of the flow vectors:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-5_cc1c1102af43212b74aebe22a695f5c3">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotFlow</span>(flowFunction) <span class="sc">+</span> <span class="fu">geom_line</span>(<span class="at">data=</span><span class="fu">data.frame</span>(path) , <span class="fu">aes</span>(<span class="at">x=</span><span class="fu">Re</span>(path), <span class="at">y=</span><span class="fu">Im</span>(path)), <span class="at">col=</span><span class="st">"red"</span>, <span class="at">lwd=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-5_525dc385aef388f9ddc5a37298034921">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotFlow</span>( \(z) (z<span class="fl">-.5</span>)<span class="sc">*</span>(z<span class="fl">+.5</span>)<span class="sc">*</span>z <span class="sc">/</span> ((z<span class="fl">-0.5</span>i<span class="fl">+0.5</span>)<span class="sc">*</span> (z<span class="fl">+0.5</span>i<span class="fl">-0.5</span>)<span class="sc">*</span>(z<span class="fl">+.1-.1</span>i)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
 </div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
 </div>
-<p>Or just use base R to plot it on its own:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-6_daad87cd2e32a03cf59593f94848205a">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(path, <span class="at">type=</span><span class="st">"l"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Adding streamlines as previously:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-6_a04f50183d3b7bd1bd86b2d5089a6030">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>flowFunction <span class="ot">=</span> \(z) (z<span class="fl">-.5</span>)<span class="sc">*</span>(z<span class="fl">+.5</span>)<span class="sc">*</span>z <span class="sc">/</span> ((z<span class="fl">-0.5</span>i<span class="fl">+0.5</span>)<span class="sc">*</span> (z<span class="fl">+0.5</span>i<span class="fl">-0.5</span>)<span class="sc">*</span>(z<span class="fl">+.1-.1</span>i))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># N streamlines and m iterations</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>makeStreams <span class="ot">&lt;-</span> <span class="cf">function</span>(startpos,<span class="at">m=</span><span class="dv">100</span>,FUN,<span class="at">d=</span><span class="fl">0.1</span>){</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  pos<span class="ot">=</span><span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>m)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  startz <span class="ot">=</span> <span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  pos[,<span class="dv">1</span>] <span class="ot">&lt;-</span> startz</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>m){</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">FUN</span>(pos[,i<span class="dv">-1</span>])</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    pos[,i] <span class="ot">&lt;-</span> pos[,i<span class="dv">-1</span>] <span class="sc">+</span> d <span class="sc">*</span> v<span class="sc">/</span><span class="fu">Mod</span>(v)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  pos</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">100</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ, <span class="at">FUN =</span> flowFunction)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="fu">plotFlow</span>(flowFunction, <span class="at">col=</span><span class="st">"grey"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(pos, <span class="dv">1</span>, lines)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
 </div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
 </div>
-<p>Next, to get a classic flow field image we can start a few different paths from different random positions. We’ll make a matrix to store all of the paths, with one row per path:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-7_55f500b752059205588159dd87294cba">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">100</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">1000</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>path_points <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>path_points[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points[,i] <span class="ot">&lt;-</span> path_points[,i<span class="dv">-1</span>] <span class="sc">+</span> .<span class="dv">01</span> <span class="sc">*</span> <span class="fu">flowFunction</span>(path_points[,i<span class="dv">-1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Now we can plot these using ggplot()</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-8_ceb5611644dbe7b1ddba492de65d35e7">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>reshape2<span class="sc">::</span><span class="fu">melt</span>(path_points) <span class="sc">|&gt;</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span><span class="fu">Re</span>(value), <span class="at">y=</span><span class="fu">Im</span>(value))) <span class="sc">+</span> <span class="fu">geom_path</span>(<span class="fu">aes</span>(<span class="at">group=</span>Var1)) <span class="sc">+</span> </span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>So we have a system for making field flow images. We define a function for our vector field, then pick starting points and interate to create the subsequent paths.</p>
+<p>The artistic elements now all come from how we choose the function and start positions, and how we draw the paths we create.</p>
+<p>If we massively increase the number of paths but reduce the number of iterations:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-7_7e5d5fa0dca49870017451924b589cd9">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">1000</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">1000</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(pos, <span class="dv">1</span>, lines)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+</div>
+<p>This is a bit dense. If we just draw points instead of lines we can control the density a bit more, and we can use the <code>scattermore</code> library to speed up the plotting enormously:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-8_e8ef968a0bc2ee6a5cfc55e82976ae61">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scattermore)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'scattermore' was built under R version 4.1.3</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">Re</span>(<span class="fu">as.vector</span>(pos)), <span class="fu">Im</span>(<span class="fu">as.vector</span>(pos)))</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">800</span>,<span class="dv">600</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>Or with base R:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-9_39178e29bc4ddde269dd7ca5202a7539">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">lines</span>(path_points[i,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Before we go any further, lets have a look at the implications of choosing specific roots for the polynomials in our rational function. The numerator here has roots at <span class="math inline">\(0.5\)</span>, <span class="math inline">\(-0.5\)</span> and <span class="math inline">\(0\)</span>. The denominator’s root are at <span class="math inline">\(-0.5+0.5i\)</span>, <span class="math inline">\(0.5-0.5i\)</span>, and <span class="math inline">\(-0.1+0.1i\)</span>. Lets add these points onto the graph to see how they interact with the flow:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-9_7462b6257328c81405d482a2e2bcbb8c">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">width=</span><span class="fu">c</span>(<span class="dv">800</span>,<span class="dv">600</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.window(...): "width" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in plot.xy(xy, type, ...): "width" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in axis(side = side, at = at, labels = labels, ...): "width" is not a
+graphical parameter
+
+Warning in axis(side = side, at = at, labels = labels, ...): "width" is not a
+graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in box(...): "width" is not a graphical parameter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in title(...): "width" is not a graphical parameter</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5+0.5</span>i, <span class="fl">0.5-0.5</span>i,<span class="sc">-</span><span class="fl">0.1+0.1</span>i), <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">4</span>, <span class="at">lwd=</span><span class="dv">4</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5</span><span class="sc">+</span>0i, <span class="fl">0.5</span>,<span class="dv">0</span>), <span class="at">col=</span><span class="st">"red"</span>, <span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">1</span>, <span class="at">lwd=</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>So we have a system for making field flow images. We define a function for our vector field, then pick starting points and interate to create the subsequent paths.</p>
-<p>The artistic elements now all come from how we choose the function and start positions, and how we iterate and represent the paths we create.</p>
-<p>If we massively increase the number of paths but reduce the number of iterations:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-10_ba3714d58de7448a60ee02448d5a4a32">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">10000</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">100</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>path_points <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>path_points[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points[,i] <span class="ot">&lt;-</span> path_points[,i<span class="dv">-1</span>] <span class="sc">+</span> .<span class="dv">01</span> <span class="sc">*</span> <span class="fu">flowFunction</span>(path_points[,i<span class="dv">-1</span>])</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">lines</span>(path_points[i,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>It seems at least in this case that the roots of the numerator (red dots) represent sinks or sources for the flow, that is points where flows are either attracted to or repelled from. The roots of the denominator (the poles of the rational function; blue crosses) are saddle points, flows are attracted to them on one axis but repelled in others, hence flows appear to ‘miss’ them altogether.</p>
+<p>In fact, this property generally holds true, the zeros of our rational function will be sinks or sources, whereas the poles will be saddle points. We can prove this by noting that the argument of our rational function will be the sum of the arguments of the respective terms, and by thinking about how this sum changes as we move around a small area close to one of the poles or zeros.</p>
+<p>In our image so far paths are starting from their randomly generated positions, and then flowing toward a sink or off the page. I think this looks messy, I would rather include the entire flow lines, and so I will add the flows both forwards and backwards from each start point. This way I generate the entire flow passing through each point, rather than just a random portion of it.</p>
+<p>I’m also changing the <code>makeStreams</code> function to return two column matrix of <code>x</code> and <code>y</code> positions in the form that <code>scattermoreplot</code> expects.</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-10_ffafd71e739c174b932dffa2327e01e5">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>makeStreams <span class="ot">&lt;-</span> <span class="cf">function</span>(startpos,<span class="at">m=</span><span class="dv">100</span>,FUN,<span class="at">d=</span><span class="fl">0.1</span>){</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  pos<span class="ot">=</span><span class="fu">matrix</span>(<span class="at">nrow=</span><span class="fu">length</span>(startpos), <span class="at">ncol=</span>m)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  pos2<span class="ot">=</span><span class="fu">matrix</span>(<span class="at">nrow=</span><span class="fu">length</span>(startpos), <span class="at">ncol=</span>m)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  pos[,<span class="dv">1</span>] <span class="ot">&lt;-</span> startpos</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  pos2[,m] <span class="ot">&lt;-</span> startpos</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>m){</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">FUN</span>(pos[,i<span class="dv">-1</span>])</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    pos[,i] <span class="ot">&lt;-</span> pos[,i<span class="dv">-1</span>] <span class="sc">+</span> d <span class="sc">*</span> v<span class="sc">/</span><span class="fu">Mod</span>(v)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> (m<span class="dv">-1</span>)<span class="sc">:</span><span class="dv">1</span>){</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">FUN</span>(pos2[,i<span class="sc">+</span><span class="dv">1</span>])</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    pos2[,i] <span class="ot">&lt;-</span> pos2[,i<span class="sc">+</span><span class="dv">1</span>] <span class="sc">-</span> d <span class="sc">*</span> v<span class="sc">/</span><span class="fu">Mod</span>(v)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  pos <span class="ot">&lt;-</span><span class="fu">cbind</span>(pos,pos2) <span class="sc">|&gt;</span> <span class="fu">as.vector</span>()</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="fu">Re</span>(pos),<span class="fu">Im</span>(pos))</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ, <span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">1000</span>,<span class="dv">1000</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>This is a bit dense so we can reduce the intensity of the points.</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-11_2ebdeea6ef16b4f82581a7467bf77462">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">points</span>(path_points[i,], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="index_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>Before we go any further, lets have a look at the implications of choosing specific roots for the polynomials in our rational function. The numerator here has roots at <span class="math inline">\(0.5\)</span>, <span class="math inline">\(-0.5\)</span> and <span class="math inline">\(0\)</span>. The denominator’s root are at <span class="math inline">\(-0.5+0.5i\)</span>, <span class="math inline">\(0.5-0.5i\)</span>, and <span class="math inline">\(-0.1+0.1i\)</span>. Lets add these points onto the graph to see how they interact with the flow:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-12_ceb61ec23fb7541c1184203256a539da">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">points</span>(path_points[i,], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5+0.5</span>i, <span class="fl">0.5-0.5</span>i,<span class="sc">-</span><span class="fl">0.1+0.1</span>i), <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">4</span>, <span class="at">lwd=</span><span class="dv">4</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5</span><span class="sc">+</span>0i, <span class="fl">0.5</span>,<span class="dv">0</span>), <span class="at">col=</span><span class="st">"red"</span>, <span class="at">cex=</span><span class="dv">2</span>,<span class="at">pch=</span><span class="dv">1</span>, <span class="at">lwd=</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="index_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>It seems at least in this case that the roots of the numerator (red dots) represent sinks or sources for the flow, that is points where flows are either attracted to or repelled from. The roots of the denominator (the poles of the rational function; blue crosses) are saddle points, flows are attracted to them on one axis but repelled in others, hence flows appear to ‘miss’ them altogether.</p>
-<p>In fact, this property generally holds true, the zeros of our rational function will be sinks or sources, whereas the poles will be saddle points. We can prove this by noting that the argument of our rational function will be the sum of the arguments of the respective terms, and by thinking about how this sum changes as we move around a small area close to one of the poles or zeros.</p>
-<p>In our image so far paths are starting from their randomly generated positions, and then flowing toward a sink or off the page. I think this looks messy, I would rather include the entire flow lines, and so I will add the flows both forwards and backwards from each start point. This way I generate the entire flow passing through each point, rather than just a random portion of it:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-13_c92d354007135b0c8716857136169411">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">10000</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">100</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>path_points_forward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>path_points_backward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>path_points_forward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_forward[,i] <span class="ot">&lt;-</span> path_points_forward[,i<span class="dv">-1</span>] <span class="sc">+</span> .<span class="dv">01</span> <span class="sc">*</span> <span class="fu">flowFunction</span>(path_points_forward[,i<span class="dv">-1</span>])</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>path_points_backward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> path_points_forward[,<span class="dv">1</span>]</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_backward[,i] <span class="ot">&lt;-</span> path_points_backward[,i<span class="dv">-1</span>] <span class="sc">-</span> .<span class="dv">01</span> <span class="sc">*</span> <span class="fu">flowFunction</span>(path_points_backward[,i<span class="dv">-1</span>])</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">points</span>(path_points_forward[i,], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">points</span>(path_points_backward[i,], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="index_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
 <p>We can make a couple of easy improvements. First by squaring the aspect ratio of the plot, second by altering the spacing between the points. At the moment it is fixed, leading to some unintended patterns in the plot points, but we can easily set it to be random:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-14_cedc580217dd1d75da0f072cf62b93d7">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">10000</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">100</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>path_points_forward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>path_points_backward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>path_points_forward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">runif</span>(N, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_forward[,i] <span class="ot">&lt;-</span> path_points_forward[,i<span class="dv">-1</span>] <span class="sc">+</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,.<span class="dv">02</span>) <span class="sc">*</span> <span class="fu">flowFunction</span>(path_points_forward[,i<span class="dv">-1</span>])</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>path_points_backward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> path_points_forward[,<span class="dv">1</span>]</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_backward[,i] <span class="ot">&lt;-</span> path_points_backward[,i<span class="dv">-1</span>] <span class="sc">-</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.02</span>) <span class="sc">*</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_backward[,i<span class="dv">-1</span>])</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">asp=</span><span class="dv">0</span>,<span class="at">axes=</span>F)</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">points</span>(path_points_forward[i,], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) <span class="fu">points</span>(path_points_backward[i,], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-11_d583f14c662ae9684ec2732656309d45">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>makeStreams <span class="ot">&lt;-</span> <span class="cf">function</span>(startpos,<span class="at">m=</span><span class="dv">100</span>,FUN,<span class="at">d=</span><span class="fl">0.1</span>){</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  N<span class="ot">=</span><span class="fu">length</span>(startpos)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  pos<span class="ot">=</span><span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>m)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  pos2<span class="ot">=</span><span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>m)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  pos[,<span class="dv">1</span>] <span class="ot">&lt;-</span> startpos</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  pos2[,m] <span class="ot">&lt;-</span> startpos</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>m){</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">FUN</span>(pos[,i<span class="dv">-1</span>])</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    pos[,i] <span class="ot">&lt;-</span> pos[,i<span class="dv">-1</span>] <span class="sc">+</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="dv">2</span>)<span class="sc">*</span>d <span class="sc">*</span> v<span class="sc">/</span><span class="fu">Mod</span>(v)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> (m<span class="dv">-1</span>)<span class="sc">:</span><span class="dv">1</span>){</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">FUN</span>(pos2[,i<span class="sc">+</span><span class="dv">1</span>])</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    pos2[,i] <span class="ot">&lt;-</span> pos2[,i<span class="sc">+</span><span class="dv">1</span>] <span class="sc">-</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="dv">2</span>)<span class="sc">*</span>d<span class="sc">*</span> v<span class="sc">/</span><span class="fu">Mod</span>(v)</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  pos <span class="ot">&lt;-</span><span class="fu">cbind</span>(pos,pos2) <span class="sc">|&gt;</span> <span class="fu">as.vector</span>()</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="fu">Re</span>(pos),<span class="fu">Im</span>(pos))</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ, <span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos, <span class="at">size=</span><span class="fu">c</span>(<span class="dv">1000</span>,<span class="dv">1000</span>),<span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>),<span class="at">asp=</span><span class="dv">1</span>,<span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+</section>
+<section id="more-complex-flow-functions" class="level2">
+<h2 class="anchored" data-anchor-id="more-complex-flow-functions">More complex flow functions</h2>
+<p>This image isn’t particularly appealing, but now that we have this system we can make a lot of beautiful images just choosing the locations of the poles and zeros of our flow function, the starting points of the flows and how they are rendered.</p>
+<p>First, lets add some more poles and zeros to our flow function. Our original function had three poles and three zeros. Here I’m going to add 20 poles and 20 zeros, choosing the location of each randomly within the canvas.</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-12_8abefa4af805184dd719cc60fdc7e05e">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Choose the location of the poles and zeros</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Our flow function</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>flowFunction <span class="ot">&lt;-</span> <span class="cf">function</span>(z) {</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  fz <span class="ot">=</span> z<span class="sc">-</span>zeros[<span class="dv">1</span>]</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> zeros[<span class="sc">-</span><span class="dv">1</span>]) fz <span class="ot">=</span> fz <span class="sc">*</span> (z<span class="sc">-</span>i)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> poles) fz <span class="ot">=</span> fz <span class="sc">/</span> (z<span class="sc">-</span>i)</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  fz<span class="sc">/</span><span class="fu">Mod</span>(fz)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Make the streams positions</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">500</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.002</span>)</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">1000</span>,<span class="dv">1000</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>),<span class="at">asp=</span><span class="dv">1</span>,<span class="at">axes=</span>F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<section id="choosing-which-streamlines-to-plot-by-setting-the-starting-points" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-which-streamlines-to-plot-by-setting-the-starting-points">Choosing which streamlines to plot by setting the starting points</h3>
+<p>Next lets alter the starting positions of the flows. In the image above they are randomly selected throughout the canvas, but I could instead start them in a ring of radius 0.5 around the canvas centre. So here we’re seeing every streamline that passes through that ring.</p>
+<p>The number of poles and zeros is also reduced.</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-13_2f4e542274e8bdd24e065d0199542004">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fl">0.6</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">300</span>))</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">5</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">5</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">10</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">10</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">1000</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.002</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">1000</span>,<span class="dv">1000</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>),<span class="at">asp=</span><span class="dv">1</span>,<span class="at">axes=</span>F,<span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<p>Next exactly the same flow field but with many more streamlines (10000 vs 300) but each with fewer points included creates an effect that looks more like shading:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-14_0a9c11b52e5cb7f137ad53017a277c9a">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fl">0.6</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">10000</span>))</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">200</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.005</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">3000</span>,<span class="dv">3000</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>),<span class="at">asp=</span><span class="dv">1</span>,<span class="at">axes=</span>F,<span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<p>This image isn’t particularly appealing, but now that we have this system we can make a lot of beautiful images just choosing (a) the locations of the poles and zeros of our flow function and (b) choosing the starting points of the flows.</p>
-<p>First, lets add some more poles and zeros to our flow function. Our original function had three poles and three zeros. Here I’m going to add 20 poles and 20 zeros, choosing the location of each randomly within the canvas.</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-15_574f08cd79fa138a4d66d468dcaffe9a">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">20</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>flowFunction <span class="ot">&lt;-</span> <span class="cf">function</span>(z) {</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  fz <span class="ot">=</span> z<span class="sc">-</span>zeros[<span class="dv">1</span>]</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> zeros[<span class="sc">-</span><span class="dv">1</span>]) fz <span class="ot">=</span> fz <span class="sc">*</span> (z<span class="sc">-</span>i)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> poles) fz <span class="ot">=</span> fz <span class="sc">/</span> (z<span class="sc">-</span>i)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  fz<span class="sc">/</span><span class="fu">Mod</span>(fz)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Or we could start them at random points along a line passing through the origin:</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-15_36c2cc9d31ad22dcbac7c6c8a477c1e8">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">5000</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">200</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)<span class="sc">*</span>(<span class="dv">1</span> <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">1</span>,<span class="sc">-</span>.<span class="dv">5</span>,.<span class="dv">5</span>))</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">200</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">2000</span>,<span class="dv">2000</span>), <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>),<span class="at">asp=</span><span class="dv">1</span>,<span class="at">axes=</span>F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="576"></p>
 </div>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-16_2f60f0887875fdad7aaa336b04e4e2d3">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">5000</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">200</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>path_points_forward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>path_points_backward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>path_points_forward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_forward[,i] <span class="ot">&lt;-</span> path_points_forward[,i<span class="dv">-1</span>] <span class="sc">+</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.01</span>) <span class="sc">*</span> </span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_forward[,i<span class="dv">-1</span>])</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>path_points_backward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> path_points_forward[,<span class="dv">1</span>]</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_backward[,i] <span class="ot">&lt;-</span> path_points_backward[,i<span class="dv">-1</span>] <span class="sc">-</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.01</span>) <span class="sc">*</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_backward[,i<span class="dv">-1</span>])</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">asp=</span><span class="dv">0</span>,<span class="at">axes=</span>F)</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>M) <span class="fu">points</span>(path_points_forward[,i], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>M) <span class="fu">points</span>(path_points_backward[,i], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="choosing-locations-for-the-poles-and-zeros" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-locations-for-the-poles-and-zeros">Choosing locations for the poles and zeros</h3>
+<p>Here I add 10 poles and 20 zeros arranges in a circle with radius 0.5.</p>
+<div class="cell" data-fig.dpi="300" data-hash="index_cache/html/unnamed-chunk-16_25631626d00c2318cfd9a4549b892264">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">&lt;-</span> <span class="fu">exp</span>(2i<span class="sc">*</span>pi<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">5</span>))<span class="sc">*</span><span class="fl">0.3</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">&lt;-</span> <span class="fu">exp</span>(2i<span class="sc">*</span>pi<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">10</span>))<span class="sc">*</span><span class="fl">0.3</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">=</span> <span class="fu">runif</span>(<span class="dv">10000</span>, <span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">10000</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">500</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.001</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">3000</span>,<span class="dv">3000</span>),<span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>),<span class="at">axes=</span>F,</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<p>Next lets alter the starting positions of the flows. In the image above they are randomly selected throughout the canvas, but I could instead start them in a ring around the canvas centre:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-17_0473acd306de02d226cc263e679d1090">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">5000</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">200</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>path_points_forward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>path_points_backward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>path_points_forward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fl">0.4</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N))</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_forward[,i] <span class="ot">&lt;-</span> path_points_forward[,i<span class="dv">-1</span>] <span class="sc">+</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.01</span>) <span class="sc">*</span> </span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_forward[,i<span class="dv">-1</span>])</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>path_points_backward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> path_points_forward[,<span class="dv">1</span>]</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_backward[,i] <span class="ot">&lt;-</span> path_points_backward[,i<span class="dv">-1</span>] <span class="sc">-</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.01</span>) <span class="sc">*</span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_backward[,i<span class="dv">-1</span>])</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">asp=</span><span class="dv">0</span>,<span class="at">axes=</span>F)</span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) <span class="fu">points</span>(path_points_forward[,i], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) <span class="fu">points</span>(path_points_backward[,i], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="a-few-more-examples" class="level2">
+<h2 class="anchored" data-anchor-id="a-few-more-examples">A few more examples</h2>
+<p>Finally I’ll show a few more examples of different outputs from this system. Most have an element of randomness since the locations of the poles and zeros are selected randomly. Rerunning the code, or changing the seed where it is set, will lead to a different image.</p>
+<p>White on black works quite well.</p>
+<div class="cell" data-fig.dpi="300" data-hash="index_cache/html/unnamed-chunk-17_7e445c260d259e1b0b922b126bbb1482">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">&lt;-</span> <span class="fu">exp</span>(2i<span class="sc">*</span>pi<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">10</span>))<span class="sc">*</span><span class="fl">0.4</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">&lt;-</span> <span class="fu">exp</span>(2i<span class="sc">*</span>pi<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">20</span>))<span class="sc">*</span><span class="fl">0.4</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fl">0.7</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">20000</span>))</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">300</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>), <span class="at">bg=</span><span class="st">"#111111"</span>)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scattermoreplot</span>(pos, </span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">size=</span><span class="fu">c</span>(<span class="dv">1800</span>,<span class="dv">1800</span>),</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>                <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>                <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>,.<span class="dv">1</span>),</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>                <span class="at">axes=</span>F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<p>Or we could start them along a line going through the origin:</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-18_17551f69e99f52fdafa5dd153d95bfb5">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">5000</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>M<span class="ot">=</span><span class="dv">200</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>path_points_forward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>path_points_backward <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span>N, <span class="at">ncol=</span>M)</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>path_points_forward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">runif</span>(N,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>)<span class="sc">*</span>(<span class="dv">1</span> <span class="sc">+</span> 1i<span class="sc">*</span><span class="fu">runif</span>(<span class="dv">1</span>,<span class="sc">-</span>.<span class="dv">5</span>,.<span class="dv">5</span>))</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_forward[,i] <span class="ot">&lt;-</span> path_points_forward[,i<span class="dv">-1</span>] <span class="sc">+</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.01</span>) <span class="sc">*</span> </span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_forward[,i<span class="dv">-1</span>])</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>path_points_backward[,<span class="dv">1</span>] <span class="ot">&lt;-</span> path_points_forward[,<span class="dv">1</span>]</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) path_points_backward[,i] <span class="ot">&lt;-</span> path_points_backward[,i<span class="dv">-1</span>] <span class="sc">-</span> <span class="fu">runif</span>(N,<span class="dv">0</span>,<span class="fl">0.01</span>) <span class="sc">*</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flowFunction</span>(path_points_backward[,i<span class="dv">-1</span>])</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), <span class="at">asp=</span><span class="dv">0</span>,<span class="at">axes=</span>F)</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) <span class="fu">points</span>(path_points_forward[,i], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>M) <span class="fu">points</span>(path_points_backward[,i], <span class="at">pch=</span><span class="st">"."</span>, <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>I’ve left the ring of starting points visible on the image because I think it looks nice, but you could easily modify the <code>makeStreams</code> function to remove the starting points from the <code>pos</code> matrix.</p>
+<p>For the next image, two concentric circles of starting points, one inside and one outside the ring of poles and zeros:</p>
+<div class="cell" data-fig.dpi="300" data-hash="index_cache/html/unnamed-chunk-18_600bea349db7c2b191aecc7b0a4ac689">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1214</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>polesandzeros <span class="ot">&lt;-</span> .<span class="dv">5</span><span class="sc">*</span><span class="fu">exp</span>(2i<span class="sc">*</span>pi<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">50</span>)[<span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>pole <span class="ot">=</span> <span class="fu">rbinom</span>(<span class="dv">20</span>, <span class="dv">1</span>,<span class="fl">0.6</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">=</span> polesandzeros[pole<span class="sc">==</span><span class="dv">1</span>]</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">=</span> polesandzeros[pole<span class="sc">==</span><span class="dv">0</span>]</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">20000</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.3</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">2</span>)),</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.7</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">2</span>))</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">300</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mar=</span><span class="dv">0</span><span class="sc">*</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>), <span class="at">bg=</span><span class="st">"#111111"</span>)</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scattermoreplot</span>(pos, </span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>                <span class="at">size=</span><span class="fu">c</span>(<span class="dv">1800</span>,<span class="dv">1800</span>),</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>                <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>                <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>                <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>,.<span class="dv">1</span>),</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>                <span class="at">axes=</span>F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<p>The poles and zeros can be arranged along a polynomial, with four different circles providing starting positions for the flows.</p>
+<p>The colour is fixed within each streamline but the saturation varies between them.</p>
+<p>Four circles provide starting points:</p>
+<div class="cell" data-fig.dpi="300" data-hash="index_cache/html/unnamed-chunk-19_ffb87d315f76b4c21de2fa7e6c6064d8">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1214</span>)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>polesandzeros <span class="ot">&lt;-</span> .<span class="dv">5</span><span class="sc">*</span><span class="fu">exp</span>(2i<span class="sc">*</span>pi<span class="sc">*</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>)[<span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>polesandzeros <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>)<span class="sc">-</span><span class="fl">0.5</span>i<span class="sc">*</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>) <span class="sc">+</span> .7i<span class="sc">*</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>)<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> .3i</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>pole <span class="ot">=</span> <span class="fu">rbinom</span>(<span class="dv">39</span>, <span class="dv">1</span>,<span class="fl">0.6</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">=</span> polesandzeros[pole<span class="sc">==</span><span class="dv">1</span>]</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">=</span> polesandzeros[pole<span class="sc">==</span><span class="dv">0</span>]</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.3</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">4</span>))<span class="sc">-</span><span class="fl">0.3-0.3</span>i,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.2</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">4</span>))<span class="sc">+</span><span class="fl">0.3-0.3</span>i,</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.15</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">4</span>))<span class="sc">-</span><span class="fl">0.6+0.6</span>i,</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.5</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">4</span>))<span class="sc">+</span><span class="fl">0.3+0.3</span>i</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">300</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.01</span>)</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="dv">0</span><span class="sc">*</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>), <span class="at">bg=</span><span class="st">"#111111"</span>)</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">1800</span>,<span class="dv">1800</span>),</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>                <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>                <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>                <span class="at">col=</span><span class="fu">hsv</span>(<span class="dv">0</span>,<span class="fu">rep</span>(<span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">4</span>),<span class="dv">4</span><span class="sc">*</span><span class="dv">600</span>),<span class="dv">1</span>,<span class="fl">0.1</span>),</span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>                <span class="at">axes=</span>F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<p>Now here’s the code for the cover image for this post.</p>
+<p>The poles and zeros are set along the same polynomial as in the previous example. The starting points are arranged in six concentric circles, and the streamlines from each have a different colour between red and blue.</p>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-20_b8c2076fb21d36c80dae5220c67c65d6">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1211</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>polesandzeros <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>)<span class="sc">-</span><span class="fl">0.5</span>i<span class="sc">*</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>) <span class="sc">+</span> .7i<span class="sc">*</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>,<span class="at">l=</span><span class="dv">40</span>)<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> .3i</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>pole <span class="ot">=</span> <span class="fu">rbinom</span>(<span class="dv">39</span>, <span class="dv">1</span>,<span class="fl">0.5</span>)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>poles <span class="ot">=</span> polesandzeros[pole<span class="sc">==</span><span class="dv">1</span>]</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>zeros <span class="ot">=</span> polesandzeros[pole<span class="sc">==</span><span class="dv">0</span>]</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">60000</span></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>startZ <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.5</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">6</span>)),</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.3</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">6</span>)),</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.4</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">6</span>)),</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.6</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">6</span>)),</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.8</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">6</span>)),</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>  <span class="fl">1.0</span><span class="sc">*</span><span class="fu">exp</span>(2i <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">l=</span>N<span class="sc">/</span><span class="dv">6</span>))</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">&lt;-</span> <span class="fu">makeStreams</span>(startZ,<span class="at">m=</span><span class="dv">500</span>,<span class="at">FUN=</span>flowFunction,<span class="at">d=</span><span class="fl">0.005</span>)</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>col<span class="ot">=</span><span class="fu">rep</span>(<span class="fu">c</span>(<span class="fu">hsv</span>(<span class="dv">0</span>,  <span class="dv">1</span>,<span class="fl">0.5</span>,<span class="fl">0.4</span>),</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>          <span class="fu">hsv</span>(<span class="fl">0.0</span>,<span class="dv">1</span>,<span class="fl">0.5</span>,<span class="fl">0.4</span>),</span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>          <span class="fu">hsv</span>(<span class="fl">0.1</span>,<span class="dv">1</span>,<span class="fl">0.5</span>,<span class="fl">0.4</span>),</span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>          <span class="fu">hsv</span>(<span class="fl">0.9</span>,<span class="dv">1</span>,<span class="fl">0.5</span>,<span class="fl">0.4</span>),</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>          <span class="fu">hsv</span>(<span class="fl">0.8</span>,<span class="dv">1</span>,<span class="fl">0.5</span>,<span class="fl">0.4</span>),</span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>          <span class="fu">hsv</span>(<span class="dv">1</span>,  <span class="dv">1</span>,<span class="fl">0.5</span>,<span class="fl">0.1</span>)</span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>          ), <span class="at">each=</span>N<span class="sc">/</span><span class="dv">6</span>)</span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a>col <span class="ot">&lt;-</span> <span class="fu">rep</span>(col,<span class="dv">1000</span>)</span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fl">0.1</span><span class="sc">*</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>), <span class="at">bg=</span><span class="st">"#dddddd"</span>)</span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a><span class="fu">scattermoreplot</span>(pos,<span class="at">size=</span><span class="fu">c</span>(<span class="dv">3000</span>,<span class="dv">3000</span>),</span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a>                <span class="at">xlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>                <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>                <span class="at">col=</span>col,</span>
+<span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a>                <span class="at">axes=</span>F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><img src="flow4.png" class="img-fluid"></p>
+</section>
+<section id="a-few-more-nice-outputs" class="level2">
+<h2 class="anchored" data-anchor-id="a-few-more-nice-outputs">A few more nice outputs</h2>
+<p>These are selected from randomly generated images based on the system described above, with various combinations of starting points and rational flow functions.</p>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img src="flow00710.png" class="img-fluid"></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img src="flow00559.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img src="flow01399.png" class="img-fluid"></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img src="flow01384.png" class="img-fluid"></p>
+</div>
 </div>
 </div>
 
