@@ -2,22 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://georgemsavva.github.io/creativecoding/about.html</loc>
-    <lastmod>2022-07-13T18:59:28.518Z</lastmod>
+    <lastmod>2022-12-10T11:01:21.098Z</lastmod>
   </url>
   <url>
     <loc>https://georgemsavva.github.io/creativecoding/index.html</loc>
-    <lastmod>2022-07-13T18:59:29.523Z</lastmod>
+    <lastmod>2022-12-10T11:01:22.024Z</lastmod>
+  </url>
+  <url>
+    <loc>https://georgemsavva.github.io/creativecoding/posts/flowfields/index.html</loc>
+    <lastmod>2022-12-10T11:01:23.727Z</lastmod>
   </url>
   <url>
     <loc>https://georgemsavva.github.io/creativecoding/posts/lissajous/index.html</loc>
-    <lastmod>2022-07-13T18:59:31.155Z</lastmod>
+    <lastmod>2022-12-10T11:01:25.304Z</lastmod>
   </url>
   <url>
     <loc>https://georgemsavva.github.io/creativecoding/posts/mystery/index.html</loc>
-    <lastmod>2022-07-13T18:59:34.001Z</lastmod>
+    <lastmod>2022-12-10T11:01:27.578Z</lastmod>
   </url>
   <url>
     <loc>https://georgemsavva.github.io/creativecoding/posts/welcome/index.html</loc>
-    <lastmod>2022-07-13T18:59:34.587Z</lastmod>
+    <lastmod>2022-12-10T11:01:28.185Z</lastmod>
   </url>
 </urlset>
