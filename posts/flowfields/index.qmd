@@ -8,21 +8,21 @@ categories: [art, R]
 draft: false
 ---
 
-This post is a bit of a mess as my method for generating and visualising flows evolved as I was writing it.  But this is art not software engineering so it'll do!   Flow fields, or vector fields, are common tool for producing generative art and there are guides to using them everwhere.  Here I document my particular approach, leading to this image:
+Flow fields, or vector fields, are used a lot in generative art.  Here I document an approach to using flow fields for art in R, leading to this image:
 
-![Flow field](flow4.png)
+![Flow field](flow4SM.png)
 
 I didn't use field flows for ages as I wasn't sure how I could add anything to what is already done, but lately I had a couple of ideas that seem innovative, or at least produce outputs that don't look like anything else I've seen, so I think its worth documenting.
 
-So in this post I'll show an approach creating flow fields using R, and then illustrate how they are used in my latest project.
+So I'll demonstrate an approach creating flow fields using R, and then illustrate how they are used in my latest project.
 
 ## Visualising a vector field
 
 As with the mystery curves I use complex numbers, because this leads to some interesting maths in the 2D plane, and R makes working with complex numbers very natural.
 
-In this first simple example I create a matrix of starting positions, $z$, make a vector field $v$ by rotating the current position by just over 90 degrees to make a flow spiralling inward.
+In this first simple example I create a matrix of starting positions, $z$, make a vector field $v$ by rotating $z$ position by just over 90 degrees to make a flow spiralling inward.
 
-Direction is measured by the argument of a complex number, so to keep the velocity of my flow constant I standardise $v$ by diving by $\left|v\right|$.
+Direction is measured by the argument of a complex number, and I want to keep the velocity of my flow constant, so I standardise $v$ by diving by $\left|v\right|$.
 
 Finally I increment the position using $z_{\text{new}}=z+0.1\times v$ and draw arrows to the new points.
 
@@ -34,8 +34,8 @@ N=20
 dat <- expand.grid(x=seq(-1,1,l=20), y=seq(-1,1,l=20))
 setDT(dat)
 
-dat[ , z := x+1i*y ]  # represent position as a complex number
-dat[ , v := z*exp(1i*3*pi/5) ] # create vector field
+dat[ , z := x+1i*y ]  # represent positions as complex numbers
+dat[ , v := z*exp(1i*3*pi/5) ] # create vector field by rotating z by 3pi/5.
 dat[ , v := v/Mod(v) ]
 
 dat[ , znew := z + .1*v  ]
@@ -48,18 +48,26 @@ arrows(Re(dat$z), Im(dat$z), Re(dat$znew), Im(dat$znew), length=0.05)
 
 ## Adding streamlines
 
-Streamlines are created by iterating the flow function.  I'll create a matrix called `pos` to store all the locations for plotting.
+Streamlines (following individual trajectories) are created by iterating the flow function.  I'll create a matrix called `pos` to store all the points along the streamlines for plotting.  (In R maticies can be complex, each element is a complex number so keeps the $x$ and $y$ positions.)
 
 ```{r}
 # N streamlines and m iterations
 N=20
 m=100
+
+# each row is a streamline
 pos=matrix(nrow=N, ncol=m)
-startz = runif(N,-1,1) + 1i*runif(N,-1,1)
+
+# make random starting positions
+startz = runif(N,-1,1) + 1i*runif(N,-1,1) 
+
+# put these starting positions into the first column of pos.
 pos[,1] <- startz
+
+# now create the subsequent columns by iterating the equations above.
 for(i in 2:m){
   v <- pos[,i-1]*exp(1i*3*pi/5)
-  pos[,i] <- pos[,i-1] + .1 * v/Mod(v)
+  pos[,i] <- pos[,i-1] + .02 * v/Mod(v)
 }
 ```
 
@@ -68,18 +76,20 @@ Now we can add the streamlines to the previous plot:
 ```{r }
 plot(dat$z, pch=19,col="grey")
 arrows(Re(dat$z), Im(dat$z), Re(dat$znew), Im(dat$znew), length=0.05,col="grey")
+
+#apply the `lines` function over the rows of pos to add the streams
 apply(pos, 1, lines)
 ```
 
 
 ## Rational functions
 
-The functions I'm going to use for my vector fields are *rational functions*, defined by the ratios of two polynomials. So our flow has modulus 1 and argument:
+The functions I'm going to use for my vector fields are *rational functions*, defined by the ratios of two polynomials. So our flow has modulus 1 and argument equal to the argument of:
 
 That is, 
 $$f(z)=\frac{\prod_{i=1}^{n}(z-a_i)}{\prod_{j=1}^{m}(z-b_j)}$$
 
-I'll illustrate this with a simple polynomial first, turning my last first chunk into a function to plot a particular vector flow, then passing it my function:
+I'll illustrate this with a simple polynomial first, turning my last chunk into a function to plot a vector flow based on a function `FUN`, then passing it a simple polynomial:
 
 ```{r }
 # takes a function and draws the vector field. 
@@ -96,7 +106,7 @@ plotFlow <- function(FUN,col="black") {
   arrows(Re(dat$z), Im(dat$z), Re(dat$znew), Im(dat$znew), length=0.05,col=col)
 }
 
-plotFlow( \(z) (z-.5)*(z+.5)*z)
+plotFlow( \(z) (z-.5)*(z+.5)*z )
 
 ```
 
@@ -118,7 +128,7 @@ flowFunction = \(z) (z-.5)*(z+.5)*z / ((z-0.5i+0.5)* (z+0.5i-0.5)*(z+.1-.1i))
 
 # N streamlines and m iterations
 
-makeStreams <- function(startpos,m=100,FUN,d=0.1){
+makeStreams <- function(startpos,m=200,FUN,d=0.02){
   pos=matrix(nrow=N, ncol=m)
   startz = runif(N,-1,1) + 1i*runif(N,-1,1)
   pos[,1] <- startz
@@ -128,7 +138,6 @@ makeStreams <- function(startpos,m=100,FUN,d=0.1){
   }
   pos
 }
-
 
 N=100
 startZ <- runif(N, -1,1) + 1i*runif(N, -1,1)
@@ -140,7 +149,7 @@ apply(pos, 1, lines)
 
 ```
 
-So we have a system for making field flow images.  We define a function for our vector field, then pick starting points and interate to create the subsequent paths.
+So we have a system for making field flow images.  We define a function for our vector field, then pick starting points and iterate to create the subsequent paths.
 
 The artistic elements now all come from how we choose the function and start positions, and how we draw the paths we create.
 
@@ -148,7 +157,6 @@ If we massively increase the number of paths but reduce the number of iterations
 
 ```{r }
 N=1000
-M=1000
 startZ <- runif(N, -1,1) + 1i*runif(N,-1,1)
 pos <- makeStreams(startZ,FUN=flowFunction,d=0.01)
 plot(NA, xlim=c(-1,1), ylim=c(-1,1))
@@ -166,14 +174,14 @@ scattermoreplot(pos,size=c(800,600), xlim=c(-1,1), ylim=c(-1,1))
 Before we go any further, lets have a look at the implications of choosing specific roots for the polynomials in our rational function.  The numerator here has roots at $0.5$, $-0.5$ and $0$.  The denominator's root are at $-0.5+0.5i$, $0.5-0.5i$, and $-0.1+0.1i$.  Lets add these points onto the graph to see how they interact with the flow:
 
 ```{r }
-scattermoreplot(pos,width=c(800,600), xlim=c(-1,1), ylim=c(-1,1))
+scattermoreplot(pos,size=c(800,600), xlim=c(-1,1), ylim=c(-1,1))
 points(c(-0.5+0.5i, 0.5-0.5i,-0.1+0.1i), col="blue", cex=2,pch=4, lwd=4)
 points(c(-0.5+0i, 0.5,0), col="red", cex=2,pch=1, lwd=4)
 ```
 
 It seems at least in this case that the roots of the numerator (red dots) represent sinks or sources for the flow, that is points where flows are either attracted to or repelled from.  The roots of the denominator (the poles of the rational function; blue crosses) are saddle points, flows are attracted to them on one axis but repelled in others, hence flows appear to 'miss' them altogether.
 
-In fact, this property generally holds true, the zeros of our rational function will be sinks or sources, whereas the poles will be saddle points.  We can prove this by noting that the argument of our rational function will be the sum of the arguments of the respective terms, and by thinking about how this sum changes as we move around a small area close to one of the poles or zeros.  
+In fact, this property generally holds, the zeros of our rational function will be sinks or sources, whereas the poles will be saddle points.  We can prove this by noting that the argument of our rational function will be the sum of the arguments of the respective terms, and by thinking about how this sum changes as we move around a small area close to one of the poles or zeros.  
 
 In our image so far paths are starting from their randomly generated positions, and then flowing toward a sink or off the page.  I think this looks messy, I would rather include the entire flow lines, and so I will add the flows both forwards and backwards from each start point.  This way I generate the entire flow passing through each point, rather than just a random portion of it.  
 
@@ -291,7 +299,6 @@ Or we could start them at random points along a line passing through the origin:
 
 ```{r fig.height=6, fig.width=6}
 N=5000
-M=200
 
 startZ <- runif(N,-1,1)*(1 + 1i*runif(1,-.5,.5))
 
@@ -447,7 +454,7 @@ scattermoreplot(pos,size=c(3000,3000),
                 axes=F)
 ```
 
-![](flow4.png)
+![](flow4SM.png)
 
 
 ## A few more nice outputs
@@ -465,3 +472,22 @@ These are selected from randomly generated images based on the system described 
 ![](flow01384.png)
 
 ::: 
+
+
+
+```{=html}
+<script src="https://giscus.app/client.js"
+        data-repo="georgemsavva/creativecoding"
+        data-repo-id="R_kgDOHRS9pg"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOHRS9ps4CO5d8"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+```
