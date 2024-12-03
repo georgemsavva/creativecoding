@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/mysterybrot/index.html",
       "/posts/flowfields/index.html",
       "/posts/lissajous/index.html",
       "/posts/mystery/index.html",
