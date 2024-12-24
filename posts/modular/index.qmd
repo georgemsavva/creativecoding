@@ -1,0 +1,83 @@
+---
+title: "Modular arithmetic and WebR"
+author: "George"
+date: "07/12/2024"
+engine: knitr
+filters:
+  - webr
+execute:
+  cache: true
+categories: [art, R]
+draft: false
+---
+
+## R in the browser!
+
+The introduction of web-r is very exciting.  Running R code directly in the browser enables all kind of possibilities for dynamic art. We can look at the effects of randomness and play with parameters without relying on a local R installation.
+
+Even more awesome, James J Balamuta has developed a WebR Quarto extension, [https://github.com/coatless/quarto-webr] so our regular code blocks can be edited and rerun by anyone!
+
+## Modular arithmetic and tile patterns
+
+Hit "Run code"!  This block calculates the result of the function $z= x^2+y^2 \mod{11} $ for each $x$ and $y$ from -16 to 16, and then plots the resulting matrix of $z$ values as an image:
+
+```{webr-r}
+N=16
+par(mar=c(1,2,1,2))
+outer(-N:N , -N:N , \(x,y) (x^2+y^2) %% 9 ) |> 
+  image(ax=F,an=F,asp=1,useR=TRUE)
+```
+Cool pattern, isn't it?  And probably unexpected, if you think about the shape that you'd expect a function based on $x^2 + y^2$ to take.
+
+Try tweaking the formula to see what happens.
+
+So why does $x^2 + y^2 \mod{11}$ make a square repeating pattern like this?
+
+For a function $f$ to repeat with period $N$, it must have the property that $f(x)=f(x+N)$.
+
+It's fairly easy to show this is the case for $f(x)=x^2 \mod{N}$, since $(x+N)^2 = x^2 + 2Nx + N^2$, and both $2Nx$ and $N^2$ are equivalent to $0 \mod{N}$.
+
+Similarly, the pattern will be symmetric around $N$ if $f(N-x)=f(x)$, which is similarly also to demonstrate in this case.  So $x^2 \mod{N}$ has period N and is symmetric.
+
+```{webr-r}
+N=32
+plot(-N:N, (-N:N)^2 %% 13,type="o",pch=19)
+```
+I think it's obvious from here that $f(x,y) = x^2 + y^2 \mod{N}$ must be a regular tile pattern, given these properties and because $f(x,y)=f(y,x)$.
+
+## More complex tiling
+
+
+
+```{web-r}
+par(oma=10*c(1,1,1,1),mar=3*c(1,1,1,1),mfrow=c(3,4))
+for(i in 5:16){
+  
+  f1=\(x,y) ((x^4+y^4) %% 28) %% i
+  f2=\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% 28) %% i
+  
+  outer(-N:N,-N:N, f1) |> image(asp=1,axes=F,col=(c("red","gold",rep(c(NA,"black"),5))))
+  outer(-N:N,-N:N, f2) |> image(asp=1,axes=F,col=(c("blue",rep(c("white","black",NA,NA,NA,NA),2))),add=T)
+}
+```
+
+## Making carpets
+
+With some tweaks to the formula we can generate more complex 
+
+```{webr-r}
+par(mar=c(1,1,1,1),bg="#00000000")
+print(sprintf("Seed = %d", i<-sample(1e4,1)))
+pal=sample(hcl.pals(),1)
+set.seed(i)
+cols = c("black",hcl.colors(12,pal,rev = TRUE))
+m1=19
+N=m1*6
+f2=\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% m1) %%
+  (sample(5:15,1)+(pmax(abs(x%/%3),abs(y%/%2))%/%9)%%6)
+outer(-(3/2*N):(3/2*N),(-N:N), f2) |>
+  image(asp=2/3,axes=F,useR=T,col = cols)
+
+```
+
+
