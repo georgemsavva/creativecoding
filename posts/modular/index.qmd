@@ -47,10 +47,12 @@ I think it's obvious from here that $f(x,y) = x^2 + y^2 \mod{N}$ must be a regul
 
 ## More complex tiling
 
+We can build on this to create some more complex patterns, and experiment with how the result changes with the formula.
 
+In the image below two images are overlaid for each tile, each with a slightly different formula. `NA` is used as a colour deliberately to let the pattern underneath show through in places.  The only parameter that changes between the tiles is the modulus, this has a big effect on the pattern! 
 
-```{web-r}
-par(oma=10*c(1,1,1,1),mar=3*c(1,1,1,1),mfrow=c(3,4))
+```{webr-r}
+par(oma=3*c(1,1,1,1),mar=1*c(1,1,1,1),mfrow=c(3,4))
 for(i in 5:16){
   
   f1=\(x,y) ((x^4+y^4) %% 28) %% i
@@ -63,21 +65,45 @@ for(i in 5:16){
 
 ## Making carpets
 
-With some tweaks to the formula we can generate more complex 
+This final chunk uses the same idea to create random 'carpets'.  The formula is varied as we move away from the centre of the image.  The aspect ratio is changed to 2/3.  For colours, two random palettes are sampled and shuffled.  A new seed is created every time you hit 'run' and is printed in case you find a pattern that you'd like to reproduce.
 
 ```{webr-r}
 par(mar=c(1,1,1,1),bg="#00000000")
 print(sprintf("Seed = %d", i<-sample(1e4,1)))
-pal=sample(hcl.pals(),1)
 set.seed(i)
-cols = c("black",hcl.colors(12,pal,rev = TRUE))
-m1=19
+pals=sample(hcl.pals(),2)
+cols = c(hcl.colors(7,pals[1],rev = TRUE),hcl.colors(7,pals[2],rev = TRUE))
+m1=29
 N=m1*6
 f2=\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% m1) %%
   (sample(5:15,1)+(pmax(abs(x%/%3),abs(y%/%2))%/%9)%%6)
-outer(-(3/2*N):(3/2*N),(-N:N), f2) |>
-  image(asp=2/3,axes=F,useR=T,col = cols)
 
+outer(-(3/2*N):(3/2*N),(-N:N), f2) |>
+  image(asp=2/3,axes=F,useR=T,col = sample(cols))
 ```
 
 
+## Remarks
+
+WebR is really cool, and its integration with Quarto is a lot of fun.  I was always a bit dissatisfied with Shiny for arty stuff (I'm sure it is great for dashboards) and I think webR is probably a better direction for building accessible art tools, as well as statistics education.
+
+
+
+
+
+```{=html}
+<script src="https://giscus.app/client.js"
+        data-repo="georgemsavva/creativecoding"
+        data-repo-id="R_kgDOHRS9pg"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOHRS9ps4CO5d8"
+        data-mapping="pathname"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+```
