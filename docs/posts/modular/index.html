@@ -9,7 +9,7 @@
 <meta name="author" content="George">
 <meta name="dcterms.date" content="2024-12-29">
 
-<title>Modular arithmetic and WebR – Mathematical Art and Creative Coding</title>
+<title>Modular arithmetic and carpets using webR – Mathematical Art and Creative Coding</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -68,6 +68,7 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script data-goatcounter="https://misfire36.goatcounter.com/count" async="" src="//gc.zgo.at/count.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/vs/editor/editor.main.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   
@@ -368,7 +369,7 @@ globalThis.qwebrCustomizedWebROptions = {
 };
 
 // Store cell data
-globalThis.qwebrCellDetails = [{"code":"N=16\npar(mar=c(1,2,1,2))\nouter(-N:N , -N:N , \\(x,y) (x^2+y^2) %% 9 ) |> \n  image(ax=F,an=F,asp=1,useR=TRUE)","id":1,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-1","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"N=32\nplot(-N:N, (-N:N)^2 %% 13,type=\"o\",pch=19)","id":2,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-2","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"par(oma=3*c(1,1,1,1),mar=1*c(1,1,1,1),mfrow=c(3,4))\nN=14\nfor(i in 5:16){\n  \n  f1=\\(x,y) ((x^4+y^4) %% 28) %% i\n  f2=\\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% 28) %% i\n  \n  outer(-N:N,-N:N, f1) |> image(asp=1,axes=F,col=(c(\"red\",\"gold\",rep(c(NA,\"black\"),5))))\n  outer(-N:N,-N:N, f2) |> image(asp=1,axes=F,col=(c(\"blue\",rep(c(\"white\",\"black\",NA,NA,NA,NA),2))),add=T)\n}","id":3,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-3","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"par(mar=c(1,1,1,1),bg=\"#00000000\")\nprint(sprintf(\"Seed = %d\", i<-sample(1e4,1)))\nset.seed(i)\npals=sample(hcl.pals(),2)\ncols = c(hcl.colors(9,pals[1],rev = TRUE),hcl.colors(9,pals[2],rev = TRUE))\nm1=29  # a prime number seems to work best here\nN=m1*6 # how many pixels tall should the carpet be?\nf2=\\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% m1) %%\n  (sample(5:15,1)+(pmax(abs(x%/%3),abs(y%/%2))%/%9)%%6)\nouter(-(3/2*N):(3/2*N),(-N:N), f2) |>\n  image(asp=2/3,axes=F,useR=T,col = sample(cols))","id":4,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-4","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"sessionInfo()","id":5,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-5","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}}];
+globalThis.qwebrCellDetails = [{"code":"N=16\npar(mar=c(1,2,1,2), bg=NA)\nouter(-N:N , -N:N , \\(x,y) (x^2+y^2) %% 9 ) |> \n  image(ax=F,an=F,asp=1,useR=TRUE)","id":1,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-1","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"N=32\nx= -N:N\ny= x^4 %% 13\nplot(x,y,type=\"o\",pch=22,bg=y,cex=2)","id":2,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-2","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"par(oma=3*c(1,1,1,1),mar=.5*c(1,1,1,1),mfrow=c(3,4))\nN=14\nfor(i in 5:16){\n  \n  f1=\\(x,y) ((x^4+y^4) %% 28) %% i\n  f2=\\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% 28) %% i\n  \n  outer(-N:N,-N:N, f1) |> image(asp=1,axes=F,col=(c(\"red\",\"gold\",rep(c(NA,\"black\"),5))))\n  outer(-N:N,-N:N, f2) |> image(asp=1,axes=F,col=(c(\"blue\",rep(c(\"white\",\"black\",NA,NA,NA,NA),2))),add=T)\n}","id":3,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-3","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"par(mar=c(1,1,1,1),bg=NA)\nprint(sprintf(\"Seed = %d\", i<-sample(1e4,1)))\nset.seed(i)\npals=sample(hcl.pals(),2)\ncols = c(hcl.colors(9,pals[1],rev = TRUE),hcl.colors(9,pals[2],rev = TRUE))\nm1=29  # a prime number seems to work best here\nN=m1*6 # how many pixels tall should the carpet be?\nf2=\\(x,y) ((x^4+y^4+(x+y)^2*(y-x)^2) %% m1) %%\n  (sample(5:15,1)+(pmax(abs(x%/%3),abs(y%/%2))%/%9)%%6)\nouter(-(3/2*N):(3/2*N),(-N:N), f2) |>\n  image(asp=2/3,axes=F,useR=T,col = sample(cols))","id":4,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-4","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"sessionInfo()","id":5,"options":{"autorun":"false","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":"1","editor-max-height":"","editor-quick-suggestions":"false","editor-word-wrap":"true","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-5","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}}];
 
 </script>
 <script type="module">
@@ -1987,7 +1988,7 @@ globalThis.qwebrCreateMonacoEditorInstance = function (cellData) {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Modular arithmetic and WebR</h1>
+<h1 class="title">Modular arithmetic and carpets using webR</h1>
   <div class="quarto-categories">
     <div class="quarto-category">art</div>
     <div class="quarto-category">R</div>
@@ -2020,10 +2021,11 @@ globalThis.qwebrCreateMonacoEditorInstance = function (cellData) {
 </header>
 
 
+<p>I’m not sure what’s more exciting, running R directly in a browser or generating rug designs with a few lines of code.</p>
 <section id="r-in-the-browser" class="level2">
 <h2 class="anchored" data-anchor-id="r-in-the-browser">R in the browser!</h2>
-<p>The introduction of webR is very exciting. Running R code directly in the browser enables all kinds of possibilities for dynamic art. We can look at the effects of randomness and play with parameters without relying on a local R installation.</p>
-<p>Even more awesome, James J Balamuta has developed a WebR Quarto extension, <a href="https://github.com/coatless/quarto-webr" class="uri">https://github.com/coatless/quarto-webr</a> so our regular code blocks can be edited and rerun by anyone!</p>
+<p>Running R code directly in the browser enables all kinds of possibilities for dynamic art. We can look at the effects of randomness and play with parameters without relying on a local R installation.</p>
+<p>Even more awesome, James J Balamuta has developed a WebR Quarto extension, <a href="https://github.com/coatless/quarto-webr" class="uri">https://github.com/coatless/quarto-webr</a> which allows regular code blocks to be edited and rerun by anyone.</p>
 </section>
 <section id="modular-arithmetic-and-tile-patterns" class="level2">
 <h2 class="anchored" data-anchor-id="modular-arithmetic-and-tile-patterns">Modular arithmetic and tile patterns</h2>
@@ -2031,19 +2033,23 @@ globalThis.qwebrCreateMonacoEditorInstance = function (cellData) {
 <div id="qwebr-insertion-location-1"></div>
 <noscript>Please enable JavaScript to experience the dynamic code cell content on this page.</noscript>
 <p>Cool pattern, isn’t it? And probably unexpected, if you think about the shape that you’d expect a function based on <span class="math inline">\(x^2 + y^2\)</span> to take.</p>
-<p>Try tweaking the formula to see what happens.</p>
+<p>Try tweaking the formula by changing the code in the block above and re-running to see what happens.</p>
+<section id="some-maths" class="level3">
+<h3 class="anchored" data-anchor-id="some-maths">Some maths</h3>
 <p>So why does <span class="math inline">\(x^2 + y^2 \bmod{11}\)</span> make a square repeating pattern like this?</p>
 <p>For a function <span class="math inline">\(f\)</span> to repeat with period <span class="math inline">\(N\)</span>, it must have the property that <span class="math inline">\(f(x)=f(x+N)\)</span>.</p>
 <p>It’s fairly easy to show this is the case for <span class="math inline">\(f(x)=x^2 \bmod{N}\)</span>, since <span class="math inline">\((x+N)^2 = x^2 + 2Nx + N^2\)</span>, and both <span class="math inline">\(2Nx\)</span> and <span class="math inline">\(N^2\)</span> are congruent with <span class="math inline">\(0 \bmod{N}\)</span>.</p>
 <p>Similarly, the pattern will be symmetric around <span class="math inline">\(N\)</span> if <span class="math inline">\(f(N-x)=f(x)\)</span>, which is similarly also to demonstrate in this case. So <span class="math inline">\(x^2 \bmod{N}\)</span> has period N and is symmetric.</p>
+<p>Below I’ve shown the value of <span class="math inline">\(f(x)=x^2 \bmod{N}\)</span>, with the point colour showing how this might translate to a colour scheme.</p>
 <div id="qwebr-insertion-location-2"></div>
 <noscript>Please enable JavaScript to experience the dynamic code cell content on this page.</noscript>
 <p>So, since <span class="math inline">\(f(x,y) = x^2 \bmod{N}\)</span> repeats in this way, I think its fairly clear that <span class="math inline">\(f(x,y) = x^2 + y^2 \bmod{N}\)</span> must represent a regular symmetric tile pattern, because for each value of <span class="math inline">\(y\)</span> we are just adding a constant (that also repeats), and because <span class="math inline">\(f(x,y)=f(y,x)\)</span>.</p>
 </section>
+</section>
 <section id="more-complex-patterns" class="level2">
 <h2 class="anchored" data-anchor-id="more-complex-patterns">More complex patterns</h2>
 <p>We can build on this to create some more complex patterns, and experiment with how the result changes with the formula.</p>
-<p>Here I’ve introduced a second modular operation to the formula. I’ve also overlaid two different layers for each pattern, each with a slightly different formula. I’ve experimented with a few variations, and found that order four polynomials seem to work well. <code>NA</code> is used as a colour to leave some areas clear and to let the pattern underneath show through in places. The first modulus is 28 in each case, the only parameter that changes between the tiles here is the second modulus which varies from 5 to 16, this has a big effect on the pattern.</p>
+<p>Here I’ve introduced a second modulus operation to the formula (see line 5 below). I’ve overlaid two different layers for each pattern, each with a slightly different formula. I’ve experimented with a few variations, and found that order four polynomials seem to work well. <code>NA</code> is used as a colour to leave some areas clear and to let the pattern underneath show through in places. The first modulus is 28 in each case, the only parameter that changes between the tiles here is the second modulus which varies from 5 to 16, this has a big effect on the pattern.</p>
 <p>Again, you can modify the code and re-reun to see what happens!</p>
 <div id="qwebr-insertion-location-3"></div>
 <noscript>Please enable JavaScript to experience the dynamic code cell content on this page.</noscript>
